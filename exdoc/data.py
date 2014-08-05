@@ -19,6 +19,8 @@ class DictProxy(dict, object):
             self[key] = value
 
 
+#region Py
+
 class ExceptionDoc(DictProxy):
     def __init__(self, name, doc):
         """ Documentation for an exception
@@ -147,3 +149,97 @@ class FDocstring(Docstring):
         args = ['='.join((a.name, repr(a.default))) if 'default' in a else a.name
                 for a in self.args]
         self.signature = '{}({})'.format(self.name, ', '.join(args))
+
+#endregion
+
+#region SA
+
+
+class SaModelDoc(DictProxy):
+    def __init__(self, name, table, doc='', columns=(), primary=(), foreign=(), unique=(), relations=()):
+        """ Documentation for an SqlAlchemy model
+
+        :param name: Model name
+        :type name: str
+        :param doc: Model docstring
+        :type doc: str
+        :param table: Table name
+        :type table: list[str]
+        :param columns: Columns spec
+        :type columns: list[SaColumnDoc]
+        :param primary: Primary key
+        :type primary: list[str]
+        :param foreign: Foreign Keys
+        :type foreign: list[SaForeignkeyDoc]
+        :param unique: Unique keys: list of lists
+        :type unique: list[tuple[str]]
+        :param relations: Relationships
+        :type relations: list[SaRelationshipDoc]
+        """
+        super(SaModelDoc, self).__init__()
+        self.name = name
+        self.table = tuple(table) if len(table) > 1 else table[0]
+        self.doc = doc
+        self.columns = columns
+        self.primary = tuple(primary) if len(primary) > 1 else primary[0]
+        self.foreign = foreign
+        self.unique = [u if len(u)>1 else u[0] for u in unique]
+        self.relations = relations
+
+
+class SaColumnDoc(DictProxy):
+    def __init__(self, key, type, doc='', null=False):
+        """ SqlAlchemy column doc
+
+        :param key: Key name
+        :type key: str
+        :param type: Column type
+        :type type: str
+        :param doc: Column docstring
+        :type doc: str
+        :param null: Nullable?
+        :type null: bool
+        """
+        super(SaColumnDoc, self).__init__()
+        self.key = key
+        self.type = type + (' NULL' if null else ' NOT NULL')
+        self.doc = doc
+
+
+class SaForeignkeyDoc(DictProxy):
+    def __init__(self, key, target):
+        """ Foreign key doc
+
+        :param key: Key name
+        :type key: str
+        :param target: Target name
+        :type target: str
+        """
+        super(SaForeignkeyDoc, self).__init__()
+        self.key = key
+        self.target = target
+
+
+class SaRelationshipDoc(DictProxy):
+    def __init__(self, key, doc='', model=None, pairs=(), uselist=True):
+        """ SqlAlchemy relationship doc
+
+        :param key: Key name
+        :type key: str
+        :param doc: Relationship docstring
+        :type doc: str
+        :param model: Foreign model name
+        :type model: str|None
+        :param pairs: Local-remote pairs
+        :type pairs: list[str]
+        :param uselist: -to-Many?
+        :type uselist: bool
+        """
+        super(SaRelationshipDoc, self).__init__()
+        self.key = key + ('[]' if uselist else '')
+        self.model = model
+        self.target = '{}({})'.format(self.model, ', '.join(pairs))
+
+        self.doc = doc
+
+#endregion

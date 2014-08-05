@@ -22,7 +22,7 @@ setup(
     install_requires=[
     ],
     extras_require={
-        '_tests': ['nose', ],
+        '_tests': ['nose', 'sqlalchemy'],
     },
     include_package_data=True,
     test_suite='nose.collector',
