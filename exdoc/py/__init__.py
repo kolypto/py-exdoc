@@ -55,7 +55,7 @@ def _get_callable(obj):
     return name + obj.__name__, o
 
 
-def _doc_parse(doc, module=None, name=None):
+def _doc_parse(doc, module=None, fullname=None):
     """ Parse docstring into a dict
 
     :rtype: data.FDocstring
@@ -110,7 +110,7 @@ def _doc_parse(doc, module=None, name=None):
     doc_args = map(lambda name: data.ArgumentDoc(name=name, **collect_args[name]), collect_args)
 
     # Finish
-    return data.FDocstring(module=module, name=name, doc=doc, args=doc_args, exc=doc_exc, ret=doc_ret)
+    return data.FDocstring(module=module, fullname=fullname, doc=doc, args=doc_args, exc=doc_exc, ret=doc_ret)
 
 
 def _argspec(func):
@@ -145,14 +145,14 @@ def _argspec(func):
     return ret
 
 
-def _docspec(func, module=None, name=None):
+def _docspec(func, module=None, fullname=None):
     """ For a callable, get the full spec by merging doc_parse() and argspec()
 
     :type func: Callable
     :rtype: data.FDocstring
     """
     sp = _argspec(func)
-    doc = _doc_parse(getdoc(func), module=module, name=name)
+    doc = _doc_parse(getdoc(func), module=module, fullname=fullname)
 
     # Merge args
     doc_map = {a.name: a for a in doc.args}
@@ -190,13 +190,13 @@ def doc(obj):
     # Not callable: e.g. modules
     if not callable(obj):
         if hasattr(obj, '__name__'):
-            return data.Docstring(name=obj.__name__, doc=getdoc(obj))
+            return data.Docstring(fullname=obj.__name__, doc=getdoc(obj))
         else:
             return None
 
     # Callables
     name, fun = _get_callable(obj)
-    docstr = _docspec(fun, module=module, name=name)
+    docstr = _docspec(fun, module=module, fullname=name)
 
     # Class? get doc
     if inspect.isclass(obj):
