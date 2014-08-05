@@ -134,9 +134,12 @@ doc(User)  # ->
   ],
   # Relationships
   'relations': [
-    {'key': 'creator', 'model': 'User', 'target': 'User(creator_uid=uid)', 'doc': ''},
-    {'key': 'devices[]', 'model': 'Device', 'target': 'Device(uid)', 'doc': ''},
-    {'key': 'created[]', 'model': 'User', 'target': 'User(uid=creator_uid)', 'doc': ''},
+    {'key': 'creator', 'model': 'User',
+     'target': 'User(creator_uid=uid)', 'doc': ''},
+    {'key': 'devices[]', 'model': 'Device',
+     'target': 'Device(uid)', 'doc': ''},
+    {'key': 'created[]', 'model': 'User',
+     'target': 'User(uid=creator_uid)', 'doc': ''},
   ]
 }
 ```
