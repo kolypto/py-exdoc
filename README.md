@@ -24,7 +24,6 @@ ExDoc is just a set of helper functions that collects information into dictionar
 Python
 ------
 
-
 ### doc(obj)
 ```python
 from exdoc import doc
@@ -59,12 +58,17 @@ doc(f)  # ->
 {
   'module': '__main__',
   'name': 'f',
-  'qualname': 'f',
+  'qualname': 'f',  # qualified name: e.g. <class>.<method>
   'signature': 'f(a, b=1, *args)',
-  'clsdoc': '',
   'doc': 'Simple function',
-  'exc': [{'doc': 'hopeless condition', 'name': 'ValueError'}],
+  'clsdoc': '',  # doc from the class (used for constructors)
+  # Exceptions
+  'exc': [
+    {'doc': 'hopeless condition', 'name': 'ValueError'}
+  ],
+  # Return value
   'ret': {'doc': 'nothing interesting', 'type': 'bool'},
+  # Arguments
   'args': [
     {'doc': 'First', 'name': 'a', 'type': 'int'},
     {'default': 1, 'doc': 'Second', 'name': 'b', 'type': 'int'},
@@ -88,3 +92,69 @@ The default predicate drops members whose name starts with '_'. To disable it, p
 List all subclasses of the given class, including itself.
 
 If `leaves=True`, only returns classes which have no subclasses themselves.
+
+
+
+SqlAlchemy
+----------
+
+Documenting SqlAlchemy models.
+
+```python
+from exdoc.sa import doc
+
+doc(User)  # ->
+{
+  'name': 'User',
+  'table': 'users',
+  'doc': 'User account',
+  # PK: str of tuple[str]
+  'primary': 'uid',
+  # Unique keys
+  'unique': [
+    # str or tuple[str]
+    'login',
+  ],
+  # Foreign keys
+  'foreign': [
+    {'key': 'uid', 'target': 'users.uid'},
+  ],
+  # Columns
+  'columns': [
+    {'key': 'uid', 'type': 'INTEGER NOT NULL', 'doc': ''},
+    {'key': 'login', 'type': 'VARCHAR NULL', 'doc': 'Login'},
+    {'key': 'creator_uid', 'type': 'INTEGER NULL', 'doc': 'Creator'},
+    {'key': 'meta', 'type': 'JSON NULL', 'doc': ''},
+  ],
+  # Relationships
+  'relations': [
+    {'key': 'creator', 'model': 'User', 'target': 'User(creator_uid=uid)', 'doc': ''},
+    {'key': 'devices[]', 'model': 'Device', 'target': 'Device(uid)', 'doc': ''},
+    {'key': 'created[]', 'model': 'User', 'target': 'User(uid=creator_uid)', 'doc': ''},
+  ]
+}
+```
+
+
+Building
+========
+
+Create a python file that collects the necessary information and prints json:
+
+```python
+#! /usr/bin/env python
+from exdoc import doc
+import json
+
+from project import User
+
+print json.dumps({
+  'user': doc(User),
+})
+```
+
+And then use its output:
+
+```console
+./collect.py | j2 --format=json README.md.j2
+```
