@@ -1,0 +1,54 @@
+[![Build Status](https://api.travis-ci.org/kolypto/py-exdoc.png?branch=master)](https://travis-ci.org/kolypto/py-exdoc)
+
+
+ExDoc
+=====
+
+Documentation extractor.
+
+Extracts pieces of documentation from your code to build a document which can be fed to template processors.
+
+Output can be in JSON, YAML, whatever.
+Use any command-line templating engine, like [j2cli](https://github.com/kolypto/j2cli), to render templates from it.
+
+It does not do any automatic background magic: it just offers helpers which allows you to extract the necessary pieces.
+
+
+
+
+Collectors
+==========
+
+ExDoc is just a set of helper functions that collects information into dictionaries.
+
+Python
+------
+
+{{ exdoc.py.__module__.doc }}
+
+### {{ exdoc.py.doc.signature }}
+{{ exdoc.py.doc.doc }}
+
+
+### {{ exdoc.py.getmembers.signature }}
+
+{{ exdoc.py.getmembers.doc }}
+
+
+### {{ exdoc.py.subclasses.signature }}
+
+{{ exdoc.py.subclasses.doc }}
+
+
+
+SqlAlchemy
+----------
+
+{{ exdoc.sa.__module__.doc }}
+
+
+Building
+========
+
+{{ exdoc.__module__.doc }}
+

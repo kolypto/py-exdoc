@@ -54,10 +54,10 @@ class SaTest(unittest.TestCase):
             {'key': 'creator_uid', 'type': 'INTEGER NULL', 'doc': 'Creator'},
             {'key': 'meta', 'type': 'JSON NULL', 'doc': ''},
         ])
-        self.assertEqual(d.pop('relations'), [
+        self.assertEqual(sorted(d.pop('relations'), lambda a, b: cmp(a['key'], b['key'])), [
+            {'key': 'created[]', 'model': 'User', 'target': 'User(uid=creator_uid)', 'doc': ''},
             {'key': 'creator', 'model': 'User', 'target': 'User(creator_uid=uid)', 'doc': ''},
             {'key': 'devices[]', 'model': 'Device', 'target': 'Device(uid)', 'doc': ''},
-            {'key': 'created[]', 'model': 'User', 'target': 'User(uid=creator_uid)', 'doc': ''},
         ])
         self.assertEqual(d, {})
 

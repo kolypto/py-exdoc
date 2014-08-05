@@ -24,7 +24,13 @@ ExDoc is just a set of helper functions that collects information into dictionar
 Python
 ------
 
+Helpers for Python objects
+
 ### doc(obj)
+Get parsed documentation for an object as a dict.
+
+This includes arguments spec, as well as the parsed data from the docstring.
+
 ```python
 from exdoc import doc
 ```
@@ -40,18 +46,18 @@ The resulting dictionary includes argument specification, as well as parsed docs
 
 ```python
 def f(a, b=1, *args):
-    """ Simple function
-       
-    :param a: First
-    :type a: int
-    :param b: Second
-    :type b: int
-    :param args: More numbers
-    :returns: nothing interesting
-    :rtype: bool
-    :raises ValueError: hopeless condition
-    """
-    
+    ''' Simple function
+
+    : param a: First
+    : type a: int
+    : param b: Second
+    : type b: int
+    : param args: More numbers
+    : returns: nothing interesting
+    : rtype: bool
+    : raises ValueError: hopeless condition
+    '''
+
 from exdoc import doc
 
 doc(f)  # ->

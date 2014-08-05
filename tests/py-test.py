@@ -77,7 +77,7 @@ class PyTest(unittest.TestCase):
         self.assertEqual(d.pop('module'), None)
         self.assertEqual(d.pop('name'), 'exdoc')
         self.assertEqual(d.pop('qualname'), 'exdoc')
-        self.assertEqual(d.pop('doc'), 'Documentation extractors')
+        self.assertTrue(d.pop('doc').startswith('Create a python file'))
         self.assertEqual(d, {})
 
 

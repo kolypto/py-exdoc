@@ -1,4 +1,40 @@
-""" Helpers for SqlAlchemy objects """
+""" Documenting SqlAlchemy models.
+
+```python
+from exdoc.sa import doc
+
+doc(User)  # ->
+{
+  'name': 'User',
+  'table': 'users',
+  'doc': 'User account',
+  # PK: str of tuple[str]
+  'primary': 'uid',
+  # Unique keys
+  'unique': [
+    # str or tuple[str]
+    'login',
+  ],
+  # Foreign keys
+  'foreign': [
+    {'key': 'uid', 'target': 'users.uid'},
+  ],
+  # Columns
+  'columns': [
+    {'key': 'uid', 'type': 'INTEGER NOT NULL', 'doc': ''},
+    {'key': 'login', 'type': 'VARCHAR NULL', 'doc': 'Login'},
+    {'key': 'creator_uid', 'type': 'INTEGER NULL', 'doc': 'Creator'},
+    {'key': 'meta', 'type': 'JSON NULL', 'doc': ''},
+  ],
+  # Relationships
+  'relations': [
+    {'key': 'creator', 'model': 'User', 'target': 'User(creator_uid=uid)', 'doc': ''},
+    {'key': 'devices[]', 'model': 'Device', 'target': 'Device(uid)', 'doc': ''},
+    {'key': 'created[]', 'model': 'User', 'target': 'User(uid=creator_uid)', 'doc': ''},
+  ]
+}
+```
+"""
 
 from ..data import SaModelDoc, SaColumnDoc, SaForeignkeyDoc, SaRelationshipDoc
 from ..py import getdoc
