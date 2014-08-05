@@ -23,7 +23,7 @@ class A(object):
     """ Empty class """
 
 
-class B(object):
+class B(A):
     """ Class with a constructor """
 
     def __init__(self, a, b=1, *args, **kwargs):
@@ -76,7 +76,7 @@ class PyTest(unittest.TestCase):
         d = exdoc.doc(exdoc)
         self.assertEqual(d.pop('module'), None)
         self.assertEqual(d.pop('name'), 'exdoc')
-        self.assertEqual(d.pop('fullname'), 'exdoc')
+        self.assertEqual(d.pop('qualname'), 'exdoc')
         self.assertEqual(d.pop('doc'), 'Documentation extractors')
         self.assertEqual(d, {})
 
@@ -85,7 +85,7 @@ class PyTest(unittest.TestCase):
         d = exdoc.doc(h)
         self.assertEqual(d.pop('module'), 'py-test')
         self.assertEqual(d.pop('name'), 'h')
-        self.assertEqual(d.pop('fullname'), 'h')
+        self.assertEqual(d.pop('qualname'), 'h')
         self.assertEqual(d.pop('doc'), 'Just a function')
         self.assertEqual(d.pop('clsdoc'), '')
         self.assertEqual(d.pop('signature'), 'h(a, b, c=True, d=1, *args, **kwargs)')
@@ -108,7 +108,7 @@ class PyTest(unittest.TestCase):
         d = exdoc.doc(A)
         self.assertEqual(d.pop('module'), 'py-test')
         self.assertEqual(d.pop('name'), 'A')
-        self.assertEqual(d.pop('fullname'), 'A')
+        self.assertEqual(d.pop('qualname'), 'A')
         del d['doc']#self.assertEqual(d['doc'], 'x.__init__(...) initializes x; see help(type(x)) for signature')  # Pythonic stuff here
         self.assertEqual(d.pop('clsdoc'), 'Empty class')
         self.assertEqual(d.pop('signature'), 'A()')
@@ -121,7 +121,7 @@ class PyTest(unittest.TestCase):
         d = exdoc.doc(B)
         self.assertEqual(d.pop('module'), 'py-test')
         self.assertEqual(d.pop('name'), 'B')
-        self.assertEqual(d.pop('fullname'), 'B')
+        self.assertEqual(d.pop('qualname'), 'B')
         self.assertEqual(d.pop('doc'), 'Constructor')
         self.assertEqual(d.pop('clsdoc'), 'Class with a constructor')
         self.assertEqual(d.pop('signature'), 'B(a, b=1, *args, **kwargs)')
@@ -139,7 +139,7 @@ class PyTest(unittest.TestCase):
         d = exdoc.doc(X)
         self.assertEqual(d.pop('module'), 'py-test')
         self.assertEqual(d.pop('name'), 'X')
-        self.assertEqual(d.pop('fullname'), 'X')
+        self.assertEqual(d.pop('qualname'), 'X')
         self.assertEqual(d.pop('doc'), 'old-style class')
         self.assertEqual(d.pop('clsdoc'), 'old-style class')
         self.assertEqual(d.pop('signature'), 'X()')
@@ -152,7 +152,7 @@ class PyTest(unittest.TestCase):
         d = exdoc.doc(Y)
         self.assertEqual(d.pop('module'), 'py-test')
         self.assertEqual(d.pop('name'), 'Y')
-        self.assertEqual(d.pop('fullname'), 'Y')
+        self.assertEqual(d.pop('qualname'), 'Y')
         self.assertEqual(d.pop('doc'), '')
         self.assertEqual(d.pop('clsdoc'), '')
         self.assertEqual(d.pop('signature'), 'Y(a, b=1)')
@@ -168,7 +168,7 @@ class PyTest(unittest.TestCase):
         d = exdoc.doc(C.f)
         self.assertEqual(d.pop('module'), 'py-test')
         self.assertEqual(d.pop('name'), 'f')
-        self.assertEqual(d.pop('fullname'), 'C.f')
+        self.assertEqual(d.pop('qualname'), 'C.f')
         self.assertEqual(d.pop('doc'), 'Empty function')
         self.assertEqual(d.pop('clsdoc'), '')
         self.assertEqual(d.pop('signature'), 'f(a=1)')
@@ -183,7 +183,7 @@ class PyTest(unittest.TestCase):
         d = exdoc.doc(C.s)
         self.assertEqual(d.pop('module'), 'py-test')
         self.assertEqual(d.pop('name'), 's')
-        self.assertEqual(d.pop('fullname'), 's')  # FIXME: wrong name for staticmethods!
+        self.assertEqual(d.pop('qualname'), 's')  # FIXME: wrong name for staticmethods!
         self.assertEqual(d.pop('doc'), 'Empty static method')
         self.assertEqual(d.pop('clsdoc'), '')
         self.assertEqual(d.pop('signature'), 's(a=2)')  # FIXME: wrong name for staticmethods!
@@ -198,7 +198,7 @@ class PyTest(unittest.TestCase):
         d = exdoc.doc(C.c)
         self.assertEqual(d.pop('module'), 'py-test')
         self.assertEqual(d.pop('name'), 'c')
-        self.assertEqual(d.pop('fullname'), 'C.c')
+        self.assertEqual(d.pop('qualname'), 'C.c')
         self.assertEqual(d.pop('doc'), '')
         self.assertEqual(d.pop('clsdoc'), '')
         self.assertEqual(d.pop('signature'), 'c(a=3)')
@@ -213,7 +213,7 @@ class PyTest(unittest.TestCase):
         d = exdoc.doc(C.p)
         self.assertEqual(d.pop('module'), 'py-test')
         self.assertEqual(d.pop('name'), 'p')
-        self.assertEqual(d.pop('fullname'), 'p')  # FIXME: wrong name for properties!
+        self.assertEqual(d.pop('qualname'), 'p')  # FIXME: wrong name for properties!
         self.assertEqual(d.pop('doc'), 'Property doc')
         self.assertEqual(d.pop('clsdoc'), '')
         self.assertEqual(d.pop('signature'), 'p')
@@ -221,3 +221,25 @@ class PyTest(unittest.TestCase):
         self.assertEqual(d.pop('args'), [])
         self.assertEqual(d.pop('exc'), [])
         self.assertEqual(d, {})
+
+    def test_getmembers(self):
+        """ Test getmembers() """
+        m = exdoc.getmembers(C)
+        self.assertEqual(m, [
+            ('c', C.c),
+            ('f', C.f),
+            ('p', C.p),
+            ('s', C.s),
+        ])
+
+        # Try with predicate
+        m = exdoc.getmembers(C, lambda key, value: key not in ('p', 's'))
+        self.assertEqual(m, [
+            ('c', C.c),
+            ('f', C.f),
+        ])
+
+    def test_subclasses(self):
+        """ Test subclasses() """
+        self.assertEqual(exdoc.subclasses(A), [A, B, C])
+        self.assertEqual(exdoc.subclasses(A, leaves=True), [C])

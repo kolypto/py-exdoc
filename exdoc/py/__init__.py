@@ -27,7 +27,7 @@ def _get_callable(obj):
 
     :param obj: function|class
     :type obj: Callable
-    :return: (name, Callable|None). Callable is None for classes without __init__()
+    :return: (qualname, Callable|None). Callable is None for classes without __init__()
     :rtype: (str, Callable|None)
     """
     # Cases
@@ -55,7 +55,7 @@ def _get_callable(obj):
     return name + obj.__name__, o
 
 
-def _doc_parse(doc, module=None, fullname=None):
+def _doc_parse(doc, module=None, qualname=None):
     """ Parse docstring into a dict
 
     :rtype: data.FDocstring
@@ -110,7 +110,7 @@ def _doc_parse(doc, module=None, fullname=None):
     doc_args = map(lambda name: data.ArgumentDoc(name=name, **collect_args[name]), collect_args)
 
     # Finish
-    return data.FDocstring(module=module, fullname=fullname, doc=doc, args=doc_args, exc=doc_exc, ret=doc_ret)
+    return data.FDocstring(module=module, qualname=qualname, doc=doc, args=doc_args, exc=doc_exc, ret=doc_ret)
 
 
 def _argspec(func):
@@ -145,14 +145,14 @@ def _argspec(func):
     return ret
 
 
-def _docspec(func, module=None, fullname=None):
+def _docspec(func, module=None, qualname=None):
     """ For a callable, get the full spec by merging doc_parse() and argspec()
 
     :type func: Callable
     :rtype: data.FDocstring
     """
     sp = _argspec(func)
-    doc = _doc_parse(getdoc(func), module=module, fullname=fullname)
+    doc = _doc_parse(getdoc(func), module=module, qualname=qualname)
 
     # Merge args
     doc_map = {a.name: a for a in doc.args}
@@ -170,8 +170,11 @@ def _docspec(func, module=None, fullname=None):
 
 
 def doc(obj):
-    """ Get documentation for an object
+    """ Get parsed documentation for an object as a dict.
 
+    This includes arguments spec, as well as the parsed data from the docstring.
+
+    :type obj: ModuleType|type|Callable|property
     :rtype: Docstring|FDocstring
     """
     # Special care about properties
@@ -190,13 +193,13 @@ def doc(obj):
     # Not callable: e.g. modules
     if not callable(obj):
         if hasattr(obj, '__name__'):
-            return data.Docstring(fullname=obj.__name__, doc=getdoc(obj))
+            return data.Docstring(qualname=obj.__name__, doc=getdoc(obj))
         else:
             return None
 
     # Callables
-    name, fun = _get_callable(obj)
-    docstr = _docspec(fun, module=module, fullname=name)
+    qualname, fun = _get_callable(obj)
+    docstr = _docspec(fun, module=module, qualname=qualname)
 
     # Class? get doc
     if inspect.isclass(obj):
@@ -204,3 +207,47 @@ def doc(obj):
 
     # Finish
     return docstr
+
+
+def getmembers(obj, *predicates):
+    """ Return all the members of an object as a list of `(key, value)` tuples, sorted by name.
+
+    :param obj: Object to list the members for
+    :param predicates: Functions to filter the members.
+
+        If the first value is not None, a default predicate is added that filters private members out (name starts with '_')
+
+    :type predicates: tuple[Callable|None]
+    :returns: Sorted list of (name, value) tuples
+    :rtype: list[(str, *)]
+    """
+    # Add default
+    if not predicates or predicates[0] is not None:
+        predicates = (lambda key, value: not key.startswith('_'),) + predicates
+    # Build composite predicate
+    def predicate((key, value)):
+        for p in predicates:
+            if p is not None and not p(key, value):
+                return False
+        return True
+    # Filter
+    return filter(predicate, inspect.getmembers(obj))
+
+
+def subclasses(cls, leaves=False):
+    """ Get a list of all subclasses for the given class, including itself.
+
+    :type cls: type
+    :param leaves: Only return leaf classes (that have no subclasses themselves)
+    :type leaves: bool
+    :rtype: list[type]
+    """
+    stack = [cls]
+    subcls = []
+    while stack:
+        c = stack.pop()
+        c_subs = c.__subclasses__()
+        stack.extend(c_subs)
+        if not leaves or not c_subs:
+            subcls.append(c)
+    return subcls

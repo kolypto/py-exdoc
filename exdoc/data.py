@@ -100,31 +100,31 @@ class Argument(ArgumentSpec, ArgumentDoc):
 
 
 class Docstring(DictProxy):
-    def __init__(self, module=None, fullname=None, doc=''):
+    def __init__(self, module=None, qualname=None, doc=''):
         """ Plaintext docstring
 
         :param module: Module name
         :type module: str|None
-        :param fullname: Object name
-        :type fullname: str|None
+        :param qualname: Qualified object name
+        :type qualname: str
         :param doc: Text
         :type doc: str
         """
         super(Docstring, self).__init__()
         self.module = module
-        self.name = fullname.rsplit('.', 1)[-1]
-        self.fullname = fullname
+        self.name = qualname.rsplit('.', 1)[-1]
+        self.qualname = qualname
         self.doc = doc
 
 
 class FDocstring(Docstring):
-    def __init__(self, module=None, fullname=None, doc='', clsdoc='', args=(), ret=None, exc=()):
+    def __init__(self, module=None, qualname=None, doc='', clsdoc='', args=(), ret=None, exc=()):
         """ Parsed docstring for a callable
 
         :param module: Module name
         :type module: str|None
-        :param name: Object name
-        :type name: str
+        :param qualname: Qualified object name
+        :type qualname: str
         :param doc: Callable docstring
         :type doc: str
         :param clsdoc: Class docstring
@@ -136,7 +136,7 @@ class FDocstring(Docstring):
         :param exc: List of exceptions
         :type exc: list[ExceptionDoc]
         """
-        super(FDocstring, self).__init__(module, fullname, doc)
+        super(FDocstring, self).__init__(module, qualname, doc)
         self.clsdoc = clsdoc
         self.args = args
         self.ret = ret
