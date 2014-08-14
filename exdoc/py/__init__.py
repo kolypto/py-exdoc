@@ -253,9 +253,29 @@ def doc(obj):
     qualname, fun = _get_callable(obj)
     docstr = _docspec(fun, module=module, qualname=qualname)
 
-    # Class? get doc
+    # Class? Get doc
     if inspect.isclass(obj):
-        docstr.clsdoc = getdoc(obj)
+        # Get class doc
+        clsdoc = getdoc(obj)
+        # Parse docstring and merge into constructor doc
+        if clsdoc:
+            # Parse docstring
+            clsdoc = _doc_parse(clsdoc, module=module, qualname=qualname)
+            # Copy: doc, exc
+            if not docstr.doc:
+                # If constructor does not have it's own docstr -- copy it to constructor
+                docstr.doc = clsdoc.doc
+                docstr.clsdoc = ''
+            else:
+                # Otherwise, leave classdoc as is
+                docstr.clsdoc = clsdoc.doc
+            docstr.exc.extend(clsdoc.exc)
+            # Merge arguments: type, doc
+            for a_class in clsdoc.args:
+                for a_constructor in docstr.args:
+                    if a_class.name == a_constructor.name:
+                        a_constructor.type = a_class.type
+                        a_constructor.doc = a_class.doc
 
     # Finish
     return docstr

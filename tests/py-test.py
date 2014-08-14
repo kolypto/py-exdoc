@@ -61,6 +61,12 @@ class X:
 
 
 class Y(X):
+    """ Constructor documented in class body
+
+        :param a: A
+        :type a: int
+    """
+
     def __init__(self, a, b=1): pass
 
 #endregion
@@ -109,7 +115,7 @@ class PyTest(unittest.TestCase):
         self.assertEqual(d.pop('module'), 'py-test')
         self.assertEqual(d.pop('name'), 'A')
         self.assertEqual(d.pop('qualname'), 'A')
-        del d['doc']#self.assertEqual(d['doc'], 'x.__init__(...) initializes x; see help(type(x)) for signature')  # Pythonic stuff here
+        self.assertIn('x.__init__(...)', d.pop('doc'))  # 'x.__init__(...) initializes x; see help(type(x)) for signature'  # Pythonic stuff here
         self.assertEqual(d.pop('clsdoc'), 'Empty class')
         self.assertEqual(d.pop('signature'), 'A()')
         self.assertEqual(d.pop('ret'), None)
@@ -153,12 +159,12 @@ class PyTest(unittest.TestCase):
         self.assertEqual(d.pop('module'), 'py-test')
         self.assertEqual(d.pop('name'), 'Y')
         self.assertEqual(d.pop('qualname'), 'Y')
-        self.assertEqual(d.pop('doc'), '')
+        self.assertEqual(d.pop('doc'), 'Constructor documented in class body')
         self.assertEqual(d.pop('clsdoc'), '')
         self.assertEqual(d.pop('signature'), 'Y(a, b=1)')
         self.assertEqual(d.pop('ret'), None)
         self.assertEqual(d.pop('args'), [
-            {'name': 'a', 'type': None, 'doc': ''},
+            {'name': 'a', 'type': 'int', 'doc': 'A'},
             {'name': 'b', 'type': None, 'doc': '', 'default': 1},
         ])
         self.assertEqual(d.pop('exc'), [])
