@@ -209,6 +209,7 @@ def doc(obj):
       'name': 'f',
       'qualname': 'f',  # qualified name: e.g. <class>.<method>
       'signature': 'f(a, b=1, *args)',
+      'qsignature': 'f(a, b=1, *args)',  # qualified signature
       'doc': 'Simple function',
       'clsdoc': '',  # doc from the class (used for constructors)
       # Exceptions
@@ -233,7 +234,7 @@ def doc(obj):
     if isinstance(obj, property):
         docstr = doc(obj.fget)
         # Some hacks for properties
-        docstr.signature = obj.fget.__name__
+        docstr.signature = docstr.qsignature= obj.fget.__name__
         docstr.args = docstr.args[1:]
         return docstr
 

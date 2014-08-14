@@ -94,7 +94,8 @@ class PyTest(unittest.TestCase):
         self.assertEqual(d.pop('qualname'), 'h')
         self.assertEqual(d.pop('doc'), 'Just a function')
         self.assertEqual(d.pop('clsdoc'), '')
-        self.assertEqual(d.pop('signature'), 'h(a, b, c=True, d=1, *args, **kwargs)')
+        self.assertEqual(d.pop('signature'),  'h(a, b, c=True, d=1, *args, **kwargs)')
+        self.assertEqual(d.pop('qsignature'), 'h(a, b, c=True, d=1, *args, **kwargs)')
         self.assertEqual(d.pop('ret'), {'doc': 'nothing', 'type': 'None'})
 
         self.assertEqual(d.pop('args'), [
@@ -117,7 +118,8 @@ class PyTest(unittest.TestCase):
         self.assertEqual(d.pop('qualname'), 'A')
         self.assertIn('x.__init__(...)', d.pop('doc'))  # 'x.__init__(...) initializes x; see help(type(x)) for signature'  # Pythonic stuff here
         self.assertEqual(d.pop('clsdoc'), 'Empty class')
-        self.assertEqual(d.pop('signature'), 'A()')
+        self.assertEqual(d.pop('signature'),  'A()')
+        self.assertEqual(d.pop('qsignature'), 'A()')
         self.assertEqual(d.pop('ret'), None)
         self.assertEqual(d.pop('args'), [])
         self.assertEqual(d.pop('exc'), [])
@@ -130,7 +132,8 @@ class PyTest(unittest.TestCase):
         self.assertEqual(d.pop('qualname'), 'B')
         self.assertEqual(d.pop('doc'), 'Constructor')
         self.assertEqual(d.pop('clsdoc'), 'Class with a constructor')
-        self.assertEqual(d.pop('signature'), 'B(a, b=1, *args, **kwargs)')
+        self.assertEqual(d.pop('signature'),  'B(a, b=1, *args, **kwargs)')
+        self.assertEqual(d.pop('qsignature'), 'B(a, b=1, *args, **kwargs)')
         self.assertEqual(d.pop('ret'), None)
         self.assertEqual(d.pop('args'), [
             {'name': 'a', 'type': None, 'doc': ''},
@@ -148,7 +151,8 @@ class PyTest(unittest.TestCase):
         self.assertEqual(d.pop('qualname'), 'X')
         self.assertEqual(d.pop('doc'), 'old-style class')
         self.assertEqual(d.pop('clsdoc'), 'old-style class')
-        self.assertEqual(d.pop('signature'), 'X()')
+        self.assertEqual(d.pop('signature'),  'X()')
+        self.assertEqual(d.pop('qsignature'), 'X()')
         self.assertEqual(d.pop('ret'), None)
         self.assertEqual(d.pop('args'), [])
         self.assertEqual(d.pop('exc'), [])
@@ -161,7 +165,8 @@ class PyTest(unittest.TestCase):
         self.assertEqual(d.pop('qualname'), 'Y')
         self.assertEqual(d.pop('doc'), 'Constructor documented in class body')
         self.assertEqual(d.pop('clsdoc'), '')
-        self.assertEqual(d.pop('signature'), 'Y(a, b=1)')
+        self.assertEqual(d.pop('signature'),  'Y(a, b=1)')
+        self.assertEqual(d.pop('qsignature'), 'Y(a, b=1)')
         self.assertEqual(d.pop('ret'), None)
         self.assertEqual(d.pop('args'), [
             {'name': 'a', 'type': 'int', 'doc': 'A'},
@@ -177,7 +182,8 @@ class PyTest(unittest.TestCase):
         self.assertEqual(d.pop('qualname'), 'C.f')
         self.assertEqual(d.pop('doc'), 'Empty function')
         self.assertEqual(d.pop('clsdoc'), '')
-        self.assertEqual(d.pop('signature'), 'f(a=1)')
+        self.assertEqual(d.pop('signature'),  'f(a=1)')
+        self.assertEqual(d.pop('qsignature'), 'C.f(a=1)')
         self.assertEqual(d.pop('ret'), {'type': None, 'doc': 'nothing'})
         self.assertEqual(d.pop('args'), [
             {'name': 'a', 'type': None, 'doc': '', 'default': 1}
@@ -192,7 +198,8 @@ class PyTest(unittest.TestCase):
         self.assertEqual(d.pop('qualname'), 's')  # FIXME: wrong name for staticmethods!
         self.assertEqual(d.pop('doc'), 'Empty static method')
         self.assertEqual(d.pop('clsdoc'), '')
-        self.assertEqual(d.pop('signature'), 's(a=2)')  # FIXME: wrong name for staticmethods!
+        self.assertEqual(d.pop('signature'),  's(a=2)')  # FIXME: wrong name for staticmethods!
+        self.assertEqual(d.pop('qsignature'), 's(a=2)')  # FIXME: wrong name for staticmethods!
         self.assertEqual(d.pop('ret'), {'type': 'None', 'doc': ''})
         self.assertEqual(d.pop('args'), [
             {'name': 'a', 'type': None, 'doc': '', 'default': 2}
@@ -207,7 +214,8 @@ class PyTest(unittest.TestCase):
         self.assertEqual(d.pop('qualname'), 'C.c')
         self.assertEqual(d.pop('doc'), '')
         self.assertEqual(d.pop('clsdoc'), '')
-        self.assertEqual(d.pop('signature'), 'c(a=3)')
+        self.assertEqual(d.pop('signature'),  'c(a=3)')
+        self.assertEqual(d.pop('qsignature'), 'C.c(a=3)')
         self.assertEqual(d.pop('ret'), None)
         self.assertEqual(d.pop('args'), [
             {'name': 'a', 'type': None, 'doc': '', 'default': 3}
@@ -222,7 +230,8 @@ class PyTest(unittest.TestCase):
         self.assertEqual(d.pop('qualname'), 'p')  # FIXME: wrong name for properties!
         self.assertEqual(d.pop('doc'), 'Property doc')
         self.assertEqual(d.pop('clsdoc'), '')
-        self.assertEqual(d.pop('signature'), 'p')
+        self.assertEqual(d.pop('signature'),  'p')
+        self.assertEqual(d.pop('qsignature'), 'p')
         self.assertEqual(d.pop('ret'), None)
         self.assertEqual(d.pop('args'), [])
         self.assertEqual(d.pop('exc'), [])

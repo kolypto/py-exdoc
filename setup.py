@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='exdoc',
-    version='0.0.2-0',
+    version='0.0.3-0',
     author='Mark Vartanyan',
     author_email='kolypto@gmail.com',
 

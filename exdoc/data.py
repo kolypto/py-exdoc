@@ -4,8 +4,8 @@
 class DictProxy(dict, object):
     """ Dictionary with attributes proxied to indicies (except for those starting with '_') """
 
-    def __init__(self):
-        super(DictProxy, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(DictProxy, self).__init__(*args, **kwargs)
 
     def __getattr__(self, key):
         if key.startswith('_'):
@@ -144,11 +144,13 @@ class FDocstring(Docstring):
         self.ret = ret
         self.exc = exc
         self.signature = None
+        self.qsignature = None
 
     def update_signature(self):
         args = ['='.join((a.name, repr(a.default))) if 'default' in a else a.name
                 for a in self.args]
         self.signature = '{}({})'.format(self.name, ', '.join(args))
+        self.qsignature = '{}({})'.format(self.qualname, ', '.join(args))
 
 #endregion
 

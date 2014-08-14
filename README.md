@@ -66,6 +66,7 @@ doc(f)  # ->
   'name': 'f',
   'qualname': 'f',  # qualified name: e.g. <class>.<method>
   'signature': 'f(a, b=1, *args)',
+  'qsignature': 'f(a, b=1, *args)',  # qualified signature
   'doc': 'Simple function',
   'clsdoc': '',  # doc from the class (used for constructors)
   # Exceptions
