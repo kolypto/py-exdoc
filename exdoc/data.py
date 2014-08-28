@@ -147,7 +147,7 @@ class FDocstring(Docstring):
         self.qsignature = None
 
     def update_signature(self):
-        args = ['='.join((a.name, repr(a.default))) if 'default' in a else a.name
+        args = ['='.join((a.name, a.default.__name__ if isinstance(a.default, type) else repr(a.default))) if 'default' in a else a.name
                 for a in self.args]
         self.signature = '{}({})'.format(self.name, ', '.join(args))
         self.qsignature = '{}({})'.format(self.qualname, ', '.join(args))

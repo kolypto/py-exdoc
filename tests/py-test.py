@@ -237,6 +237,16 @@ class PyTest(unittest.TestCase):
         self.assertEqual(d.pop('exc'), [])
         self.assertEqual(d, {})
 
+    def test_doc_specific(self):
+        """ Test specific stuff on doc() """
+
+        # Classes are represented correctly
+        class A(object): pass
+        def f(arg=A): pass
+        d = exdoc.doc(f)
+        self.assertEqual(d['signature'],  "f(arg=A)")
+        self.assertEqual(d['qsignature'], "f(arg=A)")
+
     def test_getmembers(self):
         """ Test getmembers() """
         m = exdoc.getmembers(C)
