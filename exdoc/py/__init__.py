@@ -274,7 +274,7 @@ def doc(obj):
             # Merge arguments: type, doc
             for a_class in clsdoc.args:
                 for a_constructor in docstr.args:
-                    if a_class.name == a_constructor.name:
+                    if a_class.name.lstrip('*') == a_constructor.name.lstrip('*'):
                         a_constructor.type = a_class.type
                         a_constructor.doc = a_class.doc
 

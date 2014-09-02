@@ -247,6 +247,26 @@ class PyTest(unittest.TestCase):
         self.assertEqual(d['signature'],  "f(arg=A)")
         self.assertEqual(d['qsignature'], "f(arg=A)")
 
+        # Variadic arguments with classes
+        class A(object):
+            """ Blah blah
+
+            :param a: First
+            :param args: Many arguments
+            :param kwargs: And keywords
+            """
+
+            def __init__(self, a=1, *args, **kwargs):
+                pass
+
+        d = exdoc.doc(A)
+        self.assertEqual(d['signature'], "A(a=1, *args, **kwargs)")
+        self.assertEqual(d['args'], [
+            dict(name='a',          type=None, default=1,   doc='First'),
+            dict(name='*args',      type=None,              doc='Many arguments'),
+            dict(name='**kwargs',   type=None,              doc='And keywords')
+        ])
+
     def test_getmembers(self):
         """ Test getmembers() """
         m = exdoc.getmembers(C)
