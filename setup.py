@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='exdoc',
-    version='0.0.4-0',
+    version='0.0.5-0',
     author='Mark Vartanyan',
     author_email='kolypto@gmail.com',
 
@@ -21,9 +21,7 @@ setup(
 
     install_requires=[
     ],
-    extras_require={
-        '_dev': ['wheel', 'nose', 'sqlalchemy', 'j2cli'],
-    },
+    extras_require={},
     include_package_data=True,
     test_suite='nose.collector',
 

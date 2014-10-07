@@ -262,15 +262,17 @@ def doc(obj):
         if clsdoc:
             # Parse docstring
             clsdoc = _doc_parse(clsdoc, module=module, qualname=qualname)
-            # Copy: doc, exc
-            if not docstr.doc:
-                # If constructor does not have it's own docstr -- copy it to constructor
-                docstr.doc = clsdoc.doc
-                docstr.clsdoc = ''
-            else:
-                # Otherwise, leave classdoc as is
-                docstr.clsdoc = clsdoc.doc
+
+            # Store clsdoc always
+            docstr.clsdoc = clsdoc.doc
+
+            # Merge exceptions list
             docstr.exc.extend(clsdoc.exc)
+
+            # If constructor does not have it's own docstr -- copy it from the clsdoc
+            if not docstr.doc:
+                docstr.doc = clsdoc.doc
+
             # Merge arguments: type, doc
             for a_class in clsdoc.args:
                 for a_constructor in docstr.args:

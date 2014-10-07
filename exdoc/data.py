@@ -18,6 +18,14 @@ class DictProxy(dict, object):
         else:
             self[key] = value
 
+    def update(self, *args, **kwargs):
+        """ A handy update() method which returns self :)
+
+        :rtype: DictProxy
+        """
+        super(DictProxy, self).update(*args, **kwargs)
+        return self
+
 
 #region Py
 
@@ -166,26 +174,26 @@ class SaModelDoc(DictProxy):
         :param doc: Model docstring
         :type doc: str
         :param table: Table name
-        :type table: list[str]
+        :type table: tuple[str]
         :param columns: Columns spec
         :type columns: list[SaColumnDoc]
         :param primary: Primary key
-        :type primary: list[str]
+        :type primary: tuple[str]
         :param foreign: Foreign Keys
-        :type foreign: list[SaForeignkeyDoc]
+        :type foreign: tuple[SaForeignkeyDoc]
         :param unique: Unique keys: list of lists
-        :type unique: list[tuple[str]]
+        :type unique: tuple[tuple[str]]
         :param relations: Relationships
         :type relations: list[SaRelationshipDoc]
         """
         super(SaModelDoc, self).__init__()
         self.name = name
-        self.table = tuple(table) if len(table) > 1 else table[0]
+        self.table = tuple(table)
         self.doc = doc
         self.columns = columns
-        self.primary = tuple(primary) if len(primary) > 1 else primary[0]
-        self.foreign = foreign
-        self.unique = [u if len(u)>1 else u[0] for u in unique]
+        self.primary = tuple(primary)
+        self.foreign = tuple(foreign)
+        self.unique = tuple(tuple(u) for u in unique)
         self.relations = relations
 
 
@@ -209,17 +217,23 @@ class SaColumnDoc(DictProxy):
 
 
 class SaForeignkeyDoc(DictProxy):
-    def __init__(self, key, target):
+    def __init__(self, key, target, onupdate=None, ondelete=None):
         """ Foreign key doc
 
         :param key: Key name
         :type key: str
         :param target: Target name
         :type target: str
+        :param onupdate: Behavior on update
+        :type onupdate: str|None
+        :param ondelete: Behavior on delete
+        :type ondelete: str|None
         """
         super(SaForeignkeyDoc, self).__init__()
         self.key = key
         self.target = target
+        self.onupdate = onupdate
+        self.ondelete = ondelete
 
 
 class SaRelationshipDoc(DictProxy):

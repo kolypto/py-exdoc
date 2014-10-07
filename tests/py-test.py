@@ -164,7 +164,7 @@ class PyTest(unittest.TestCase):
         self.assertEqual(d.pop('name'), 'Y')
         self.assertEqual(d.pop('qualname'), 'Y')
         self.assertEqual(d.pop('doc'), 'Constructor documented in class body')
-        self.assertEqual(d.pop('clsdoc'), '')
+        self.assertEqual(d.pop('clsdoc'), 'Constructor documented in class body')
         self.assertEqual(d.pop('signature'),  'Y(a, b=1)')
         self.assertEqual(d.pop('qsignature'), 'Y(a, b=1)')
         self.assertEqual(d.pop('ret'), None)

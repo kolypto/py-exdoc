@@ -6,19 +6,20 @@ from exdoc.sa import doc
 doc(User)  # ->
 {
   'name': 'User',
-  'table': 'users',
+  # List of tables the model uses
+  'table': ('users',),
   'doc': 'User account',
-  # PK: str of tuple[str]
-  'primary': 'uid',
+  # PK: tuple[str]
+  'primary': ('uid',),
   # Unique keys
-  'unique': [
-    # str or tuple[str]
-    'login',
-  ],
+  'unique': (
+    # tuple[str]
+    ('login',),
+  ),
   # Foreign keys
-  'foreign': [
-    {'key': 'uid', 'target': 'users.uid'},
-  ],
+  'foreign': (
+    {'key': 'uid', 'target': 'users.uid', 'onupdate': None, 'ondelete': 'CASCADE'},
+  ),
   # Columns
   'columns': [
     {'key': 'uid', 'type': 'INTEGER NOT NULL', 'doc': ''},
@@ -93,7 +94,9 @@ def _model_foreign(ins):
         fks.extend([
             SaForeignkeyDoc(
                 key=fk.column.key,
-                target=fk.target_fullname
+                target=fk.target_fullname,
+                onupdate=fk.onupdate,
+                ondelete=fk.ondelete
             )
             for fk in t.foreign_keys])
     return fks

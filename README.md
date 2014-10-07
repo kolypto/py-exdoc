@@ -113,19 +113,20 @@ from exdoc.sa import doc
 doc(User)  # ->
 {
   'name': 'User',
-  'table': 'users',
+  # List of tables the model uses
+  'table': ('users',),
   'doc': 'User account',
-  # PK: str of tuple[str]
-  'primary': 'uid',
+  # PK: tuple[str]
+  'primary': ('uid',),
   # Unique keys
-  'unique': [
-    # str or tuple[str]
-    'login',
-  ],
+  'unique': (
+    # tuple[str]
+    ('login',),
+  ),
   # Foreign keys
-  'foreign': [
-    {'key': 'uid', 'target': 'users.uid'},
-  ],
+  'foreign': (
+    {'key': 'uid', 'target': 'users.uid', 'onupdate': None, 'ondelete': 'CASCADE'},
+  ),
   # Columns
   'columns': [
     {'key': 'uid', 'type': 'INTEGER NOT NULL', 'doc': ''},

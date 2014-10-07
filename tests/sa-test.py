@@ -41,13 +41,13 @@ class SaTest(unittest.TestCase):
         # User
         d = sa.doc(User)
         self.assertEqual(d.pop('name'), 'User')
-        self.assertEqual(d.pop('table'), 'users')
+        self.assertEqual(d.pop('table'), ('users',))
         self.assertEqual(d.pop('doc'), '')
-        self.assertEqual(d.pop('primary'), 'uid')
-        self.assertEqual(d.pop('unique'), ['login'])
-        self.assertEqual(d.pop('foreign'), [
-            {'key': 'uid', 'target': 'users.uid'},
-        ])
+        self.assertEqual(d.pop('primary'), ('uid',))
+        self.assertEqual(d.pop('unique'), (('login',),))
+        self.assertEqual(d.pop('foreign'), (
+            {'key': 'uid', 'target': 'users.uid', 'onupdate': None, 'ondelete': 'SET NULL'},
+        ))
         self.assertEqual(d.pop('columns'), [
             {'key': 'uid', 'type': 'INTEGER NOT NULL', 'doc': ''},
             {'key': 'login', 'type': 'VARCHAR NULL', 'doc': 'Login'},
@@ -64,13 +64,13 @@ class SaTest(unittest.TestCase):
         # Device
         d = sa.doc(Device)
         self.assertEqual(d.pop('name'), 'Device')
-        self.assertEqual(d.pop('table'), 'devices')
+        self.assertEqual(d.pop('table'), ('devices',))
         self.assertEqual(d.pop('doc'), 'User device')
-        self.assertEqual(d.pop('primary'), 'id')
-        self.assertEqual(d.pop('unique'), [('uid', 'serial')])
-        self.assertEqual(d.pop('foreign'), [
-            {'key': 'uid', 'target': 'users.uid'},
-        ])
+        self.assertEqual(d.pop('primary'), ('id',))
+        self.assertEqual(d.pop('unique'), (('uid', 'serial'),))
+        self.assertEqual(d.pop('foreign'), (
+            {'key': 'uid', 'target': 'users.uid', 'onupdate': None, 'ondelete': 'CASCADE'},
+        ))
         self.assertEqual(d.pop('columns'), [
             {'key': 'id', 'type': 'INTEGER NOT NULL', 'doc': ''},
             {'key': 'uid', 'type': 'INTEGER NOT NULL', 'doc': 'Owner'},
