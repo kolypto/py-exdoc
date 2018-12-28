@@ -12,7 +12,8 @@ setup(
     url='https://github.com/kolypto/py-exdoc',
     license='BSD',
     description=__doc__,
-    long_description=open('README.rst').read(),
+    long_description=open('README.md').read(),
+    long_description_content_type='text/markdown',
     keywords=['documentation'],
 
     packages=find_packages(),

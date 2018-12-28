@@ -1,4 +1,4 @@
 wheel
 nose
-sqlalchemy
 j2cli
+sqlalchemy
