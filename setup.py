@@ -21,6 +21,7 @@ setup(
     entry_points={},
 
     install_requires=[
+        'six',
     ],
     extras_require={},
     include_package_data=True,
@@ -34,7 +35,7 @@ setup(
         'Natural Language :: English',
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 2',
-        #'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3',
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
 )
