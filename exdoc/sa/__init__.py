@@ -137,7 +137,7 @@ def _model_relations(ins):
             key=r.key,
             doc=r.doc or '',
             model=model_name,
-            pairs=map(lambda (a, b): a.key if a.key == b.key else '{}={}'.format(a.key, b.key), r.local_remote_pairs),
+            pairs=map(lambda a_b_tuple: a_b_tuple[0].key if a_b_tuple[0].key == a_b_tuple[1].key else '{}={}'.format(a_b_tuple[0].key, a_b_tuple[1].key), r.local_remote_pairs),
             uselist=r.uselist
         ))
     return relations

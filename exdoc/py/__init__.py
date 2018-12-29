@@ -304,7 +304,8 @@ def getmembers(obj, *predicates):
     if not predicates or predicates[0] is not None:
         predicates = (lambda key, value: not key.startswith('_'),) + predicates
     # Build composite predicate
-    def predicate((key, value)):
+    def predicate(key_value_tuple):
+        key, value = key_value_tuple
         for p in predicates:
             if p is not None and not p(key, value):
                 return False
