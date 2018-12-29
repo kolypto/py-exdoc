@@ -1,5 +1,6 @@
 import unittest
 import exdoc
+import six
 
 
 #region Samples
@@ -116,13 +117,27 @@ class PyTest(unittest.TestCase):
         self.assertEqual(d.pop('module'), 'py-test')
         self.assertEqual(d.pop('name'), 'A')
         self.assertEqual(d.pop('qualname'), 'A')
-        self.assertIn('x.__init__(...)', d.pop('doc'))  # 'x.__init__(...) initializes x; see help(type(x)) for signature'  # Pythonic stuff here
+        if six.PY2:
+            # This class has no constructor; default comment is inherited from within Python
+            self.assertIn('x.__init__(...)', d.pop('doc'))  # 'x.__init__(...) initializes x; see help(type(x)) for signature'  # Pythonic stuff here
+        else:
+            self.assertEqual('Initialize self.  See help(type(self)) for accurate signature.', d.pop('doc'))  # Pythonic stuff
         self.assertEqual(d.pop('clsdoc'), 'Empty class')
-        self.assertEqual(d.pop('signature'),  'A()')
-        self.assertEqual(d.pop('qsignature'), 'A()')
-        self.assertEqual(d.pop('ret'), None)
-        self.assertEqual(d.pop('args'), [])
-        self.assertEqual(d.pop('exc'), [])
+        if six.PY2:
+            self.assertEqual(d.pop('signature'),  'A()')
+            self.assertEqual(d.pop('qsignature'), 'A()')
+            self.assertEqual(d.pop('ret'), None)
+            self.assertEqual(d.pop('args'), [])
+            self.assertEqual(d.pop('exc'), [])
+        else:
+            self.assertEqual(d.pop('signature'),  'A(*args, **kwargs)')
+            self.assertEqual(d.pop('qsignature'), 'A(*args, **kwargs)')
+            self.assertEqual(d.pop('ret'), None)
+            self.assertEqual(d.pop('args'), [
+                {'name': '*args', 'type': None, 'doc': ''},
+                {'name': '**kwargs', 'type': None, 'doc': ''},
+            ])
+            self.assertEqual(d.pop('exc'), [])
         self.assertEqual(d, {})
 
         # Class: B
@@ -145,38 +160,41 @@ class PyTest(unittest.TestCase):
         self.assertEqual(d, {})
 
         # Class: X
-        d = exdoc.doc(X)
-        self.assertEqual(d.pop('module'), 'py-test')
-        self.assertEqual(d.pop('name'), 'X')
-        self.assertEqual(d.pop('qualname'), 'X')
-        self.assertEqual(d.pop('doc'), 'old-style class')
-        self.assertEqual(d.pop('clsdoc'), 'old-style class')
-        self.assertEqual(d.pop('signature'),  'X()')
-        self.assertEqual(d.pop('qsignature'), 'X()')
-        self.assertEqual(d.pop('ret'), None)
-        self.assertEqual(d.pop('args'), [])
-        self.assertEqual(d.pop('exc'), [])
-        self.assertEqual(d, {})
+        if six.PY2:
+            d = exdoc.doc(X)
+            self.assertEqual(d.pop('module'), 'py-test')
+            self.assertEqual(d.pop('name'), 'X')
+            self.assertEqual(d.pop('qualname'), 'X')
+            self.assertEqual(d.pop('doc'), 'old-style class')
+            self.assertEqual(d.pop('clsdoc'), 'old-style class')
+            self.assertEqual(d.pop('signature'),  'X()')
+            self.assertEqual(d.pop('qsignature'), 'X()')
+            self.assertEqual(d.pop('ret'), None)
+            self.assertEqual(d.pop('args'), [])
+            self.assertEqual(d.pop('exc'), [])
+            self.assertEqual(d, {})
 
-        # Class: Y
-        d = exdoc.doc(Y)
-        self.assertEqual(d.pop('module'), 'py-test')
-        self.assertEqual(d.pop('name'), 'Y')
-        self.assertEqual(d.pop('qualname'), 'Y')
-        self.assertEqual(d.pop('doc'), 'Constructor documented in class body')
-        self.assertEqual(d.pop('clsdoc'), 'Constructor documented in class body')
-        self.assertEqual(d.pop('signature'),  'Y(a, b=1)')
-        self.assertEqual(d.pop('qsignature'), 'Y(a, b=1)')
-        self.assertEqual(d.pop('ret'), None)
-        self.assertEqual(d.pop('args'), [
-            {'name': 'a', 'type': 'int', 'doc': 'A'},
-            {'name': 'b', 'type': None, 'doc': '', 'default': 1},
-        ])
-        self.assertEqual(d.pop('exc'), [])
-        self.assertEqual(d, {})
+            # Class: Y
+            d = exdoc.doc(Y)
+            self.assertEqual(d.pop('module'), 'py-test')
+            self.assertEqual(d.pop('name'), 'Y')
+            self.assertEqual(d.pop('qualname'), 'Y')
+            self.assertEqual(d.pop('doc'), 'Constructor documented in class body')
+            self.assertEqual(d.pop('clsdoc'), 'Constructor documented in class body')
+            self.assertEqual(d.pop('signature'), 'Y(a, b=1)')
+            self.assertEqual(d.pop('qsignature'), 'Y(a, b=1)')
+            self.assertEqual(d.pop('ret'), None)
+            self.assertEqual(d.pop('args'), [
+                {'name': 'a', 'type': 'int', 'doc': 'A'},
+                {'name': 'b', 'type': None, 'doc': '', 'default': 1},
+            ])
+            self.assertEqual(d.pop('exc'), [])
+            self.assertEqual(d, {})
+        else:
+            pass  # No old-style classes in Python 3
 
         # Method: C.f
-        d = exdoc.doc(C.f)
+        d = exdoc.doc(C.f, C)
         self.assertEqual(d.pop('module'), 'py-test')
         self.assertEqual(d.pop('name'), 'f')
         self.assertEqual(d.pop('qualname'), 'C.f')
@@ -192,14 +210,18 @@ class PyTest(unittest.TestCase):
         self.assertEqual(d, {})
 
         # Static Method: C.s
-        d = exdoc.doc(C.s)
+        d = exdoc.doc(C.s, C)
         self.assertEqual(d.pop('module'), 'py-test')
         self.assertEqual(d.pop('name'), 's')
-        self.assertEqual(d.pop('qualname'), 's')  # FIXME: wrong name for staticmethods!
+        if six.PY2:
+            self.assertEqual(d.pop('qualname'), 's')  # FIXME: wrong name for staticmethods!
+            self.assertEqual(d.pop('qsignature'), 's(a=2)')  # FIXME: wrong name for staticmethods!
+        else:
+            self.assertEqual(d.pop('qualname'), 'C.s')
+            self.assertEqual(d.pop('qsignature'), 'C.s(a=2)')
+        self.assertEqual(d.pop('signature'), 's(a=2)')
         self.assertEqual(d.pop('doc'), 'Empty static method')
         self.assertEqual(d.pop('clsdoc'), '')
-        self.assertEqual(d.pop('signature'),  's(a=2)')  # FIXME: wrong name for staticmethods!
-        self.assertEqual(d.pop('qsignature'), 's(a=2)')  # FIXME: wrong name for staticmethods!
         self.assertEqual(d.pop('ret'), {'type': 'None', 'doc': ''})
         self.assertEqual(d.pop('args'), [
             {'name': 'a', 'type': None, 'doc': '', 'default': 2}
@@ -208,7 +230,7 @@ class PyTest(unittest.TestCase):
         self.assertEqual(d, {})
 
         # Class Method: C.c
-        d = exdoc.doc(C.c)
+        d = exdoc.doc(C.c, C)
         self.assertEqual(d.pop('module'), 'py-test')
         self.assertEqual(d.pop('name'), 'c')
         self.assertEqual(d.pop('qualname'), 'C.c')
@@ -227,11 +249,15 @@ class PyTest(unittest.TestCase):
         d = exdoc.doc(C.p)
         self.assertEqual(d.pop('module'), 'py-test')
         self.assertEqual(d.pop('name'), 'p')
-        self.assertEqual(d.pop('qualname'), 'p')  # FIXME: wrong name for properties!
+        if six.PY2:
+            self.assertEqual(d.pop('qualname'), 'p')  # FIXME: wrong name for properties!
+            self.assertEqual(d.pop('qsignature'), 'p')  # FIXME: wrong name for properties!
+        else:
+            self.assertEqual(d.pop('qualname'), 'C.p')  # FIXME: wrong name for properties!
+            self.assertEqual(d.pop('qsignature'), 'p')  # FIXME: wrong name for properties!
+        self.assertEqual(d.pop('signature'), 'p')
         self.assertEqual(d.pop('doc'), 'Property doc')
         self.assertEqual(d.pop('clsdoc'), '')
-        self.assertEqual(d.pop('signature'),  'p')
-        self.assertEqual(d.pop('qsignature'), 'p')
         self.assertEqual(d.pop('ret'), None)
         self.assertEqual(d.pop('args'), [])
         self.assertEqual(d.pop('exc'), [])
@@ -245,7 +271,10 @@ class PyTest(unittest.TestCase):
         def f(arg=A): pass
         d = exdoc.doc(f)
         self.assertEqual(d['signature'],  "f(arg=A)")
-        self.assertEqual(d['qsignature'], "f(arg=A)")
+        if six.PY2:
+            self.assertEqual(d['qsignature'], "f(arg=A)")
+        else:
+            self.assertEqual(d['qsignature'], "PyTest.test_doc_specific.<locals>.f(arg=A)")
 
         # Variadic arguments with classes
         class A(object):
@@ -270,7 +299,7 @@ class PyTest(unittest.TestCase):
     def test_getmembers(self):
         """ Test getmembers() """
         m = exdoc.getmembers(C)
-        self.assertEqual(m, [
+        self.assertEqual(list(m), [
             ('c', C.c),
             ('f', C.f),
             ('p', C.p),
@@ -279,7 +308,7 @@ class PyTest(unittest.TestCase):
 
         # Try with predicate
         m = exdoc.getmembers(C, lambda key, value: key not in ('p', 's'))
-        self.assertEqual(m, [
+        self.assertEqual(list(m), [
             ('c', C.c),
             ('f', C.f),
         ])

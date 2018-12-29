@@ -1,4 +1,4 @@
-import unittest
+import unittest, six
 from exdoc import sa
 
 from sqlalchemy.ext.declarative import declarative_base
@@ -42,7 +42,10 @@ class SaTest(unittest.TestCase):
         d = sa.doc(User)
         self.assertEqual(d.pop('name'), 'User')
         self.assertEqual(d.pop('table'), ('users',))
-        self.assertEqual(d.pop('doc'), '')
+        if six.PY2:
+            self.assertEqual(d.pop('doc'), '')
+        else:
+            self.assertEqual(d.pop('doc'), 'The most base type')  # Pythonic stuff
         self.assertEqual(d.pop('primary'), ('uid',))
         self.assertEqual(d.pop('unique'), (('login',),))
         self.assertEqual(d.pop('foreign'), (
@@ -54,7 +57,7 @@ class SaTest(unittest.TestCase):
             {'key': 'creator_uid', 'type': 'INTEGER NULL', 'doc': 'Creator'},
             {'key': 'meta', 'type': 'JSON NULL', 'doc': ''},
         ])
-        self.assertEqual(sorted(d.pop('relations'), lambda a, b: cmp(a['key'], b['key'])), [
+        self.assertEqual(sorted(d.pop('relations'), key=lambda a: a['key']), [
             {'key': 'created[]', 'model': 'User', 'target': 'User(uid=creator_uid)', 'doc': ''},
             {'key': 'creator', 'model': 'User', 'target': 'User(creator_uid=uid)', 'doc': ''},
             {'key': 'devices[]', 'model': 'Device', 'target': 'Device(uid)', 'doc': ''},

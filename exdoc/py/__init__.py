@@ -3,6 +3,7 @@
 import inspect
 import collections
 import re
+import six
 from .. import data
 
 
@@ -14,7 +15,7 @@ def getdoc(obj):
     return (inspect.getdoc(obj) or '').strip()
 
 
-def _get_callable(obj):
+def _get_callable(obj, of_class = None):
     """ Get callable for an object and its full name.
 
     Supports:
@@ -27,32 +28,48 @@ def _get_callable(obj):
 
     :param obj: function|class
     :type obj: Callable
-    :return: (qualname, Callable|None). Callable is None for classes without __init__()
-    :rtype: (str, Callable|None)
+    :param of_class: Class that this method is a member of
+    :type of_class: class|None
+    :return: (qualname, Callable|None, Class|None). Callable is None for classes without __init__()
+    :rtype: (str, Callable|None, Class|None)
     """
     # Cases
     name = ''
     o = obj
-    if inspect.isfunction(obj):
-        pass
-    elif inspect.isclass(obj):
-        try:
-            o = obj.__init__
-        except AttributeError:
+
+    if six.PY2:
+        if inspect.isfunction(obj):
             pass
-    elif inspect.ismethod(obj):
-        if obj.im_class is type:
-            # @classmethod: bound to class
-            cls = obj.im_self
+        elif inspect.isclass(obj):
+            try:
+                o = obj.__init__
+                of_class = obj
+            except AttributeError:
+                pass
+        elif inspect.ismethod(obj):
+            if obj.im_class is type:
+                # @classmethod: bound to class
+                cls = obj.im_self
+            else:
+                # Ordinary methods: not bound
+                cls = obj.im_class
+            name = cls.__name__ + '.'
         else:
-            # Ordinary methods: not bound
-            cls = obj.im_class
-        name = cls.__name__ + '.'
+            raise AssertionError('Unsupported type provided: {}'.format(type(obj)))
     else:
-        raise AssertionError('Unsupported type provided: {}'.format(type(obj)))
+        if inspect.isfunction(obj) and of_class is None:
+            pass
+        elif inspect.isclass(obj):
+            try:
+                o = obj.__init__
+                of_class = obj
+            except AttributeError:
+                pass
+
+        return obj.__qualname__, o, of_class
 
     # Finish
-    return name + obj.__name__, o
+    return name + obj.__name__, o, of_class
 
 
 def _doc_parse(doc, module=None, qualname=None):
@@ -113,6 +130,15 @@ def _doc_parse(doc, module=None, qualname=None):
     return data.FDocstring(module=module, qualname=qualname, doc=doc, args=doc_args, exc=doc_exc, ret=doc_ret)
 
 
+if six.PY3:
+    def is_method_static(cls, method_name):
+        # http://stackoverflow.com/questions/14187973/python3-check-if-method-is-static
+        for c in cls.mro():
+            if method_name in c.__dict__:
+                return isinstance(c.__dict__[method_name], staticmethod)
+        raise RuntimeError("Unable to find %s in %s" % (method_name, cls.__name__))
+
+
 def _argspec(func):
     """ For a callable, get the full argument spec
 
@@ -121,7 +147,7 @@ def _argspec(func):
     """
     assert isinstance(func, collections.Callable), 'Argument must be a callable'
 
-    try: sp = inspect.getargspec(func)
+    try: sp =  inspect.getargspec(func) if six.PY2 else inspect.getfullargspec(func)
     except TypeError:
         # inspect.getargspec() fails for built-in functions
         return []
@@ -138,14 +164,20 @@ def _argspec(func):
     # *args, **kwargs
     if sp.varargs:
         ret.append(data.ArgumentSpec(sp.varargs, varargs=True))
-    if sp.keywords:
-        ret.append(data.ArgumentSpec(sp.keywords, keywords=True))
+    if six.PY2:
+        if sp.keywords:
+            ret.append(data.ArgumentSpec(sp.keywords, keywords=True))
+    else:
+        if sp.varkw:
+            ret.append(data.ArgumentSpec(sp.varkw, keywords=True))
+
+    # TODO: support Python 3: kwonlyargs, kwonlydefaults, annotations
 
     # Finish
     return ret
 
 
-def _docspec(func, module=None, qualname=None):
+def _docspec(func, module=None, qualname=None, of_class=None):
     """ For a callable, get the full spec by merging doc_parse() and argspec()
 
     :type func: Callable
@@ -158,9 +190,10 @@ def _docspec(func, module=None, qualname=None):
     doc_map = {a.name: a for a in doc.args}
     doc.args = [data.Argument(a, doc_map.get(a.name.lstrip('*'), None)) for a in sp]
 
-    # Args shift
-    if inspect.ismethod(func):
-        doc.args = doc.args[1:]
+    # Args shift: dump `self`
+    if (six.PY2 and inspect.ismethod(func)) or \
+        (six.PY3 and (inspect.isroutine(func) and of_class is not None) and (of_class is not None and not is_method_static(of_class, func.__name__))):
+            doc.args = doc.args[1:]
 
     # Signature
     doc.update_signature()
@@ -169,7 +202,7 @@ def _docspec(func, module=None, qualname=None):
     return doc
 
 
-def doc(obj):
+def doc(obj, of_class=None):
     """ Get parsed documentation for an object as a dict.
 
     This includes arguments spec, as well as the parsed data from the docstring.
@@ -251,8 +284,8 @@ def doc(obj):
             return None
 
     # Callables
-    qualname, fun = _get_callable(obj)
-    docstr = _docspec(fun, module=module, qualname=qualname)
+    qualname, fun, of_class = _get_callable(obj, of_class)
+    docstr = _docspec(fun, module=module, qualname=qualname, of_class=of_class)
 
     # Class? Get doc
     if inspect.isclass(obj):
