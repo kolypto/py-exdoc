@@ -26,7 +26,7 @@ Python
 
 Helpers for Python objects
 
-### doc(obj)
+### doc(obj, of_class=None)
 Get parsed documentation for an object as a dict.
 
 This includes arguments spec, as well as the parsed data from the docstring.
@@ -83,6 +83,14 @@ doc(f)  # ->
   ],
 }
 ```
+
+Note: in Python 3, when documenting a method of a class, pass the class to the `doc()` function as the second argument:
+
+```python
+doc(cls.method, cls)
+```
+
+This is necessary because in Python3 methods are not bound like they used to. Now, they are just functions.
 
 
 ### getmembers(obj, *predicates)
@@ -169,3 +177,4 @@ And then use its output:
 ```console
 ./collect.py | j2 --format=json README.md.j2
 ```
+
