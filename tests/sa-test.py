@@ -42,10 +42,7 @@ class SaTest(unittest.TestCase):
         d = sa.doc(User)
         self.assertEqual(d.pop('name'), 'User')
         self.assertEqual(d.pop('table'), ('users',))
-        if six.PY2 or (3,4) == sys.version_info[:2]:
-            self.assertEqual(d.pop('doc'), '')
-        else:
-            self.assertEqual(d.pop('doc'), 'The most base type')  # Pythonic stuff
+        self.assertEqual(d.pop('doc'), '')
         self.assertEqual(d.pop('primary'), ('uid',))
         self.assertEqual(d.pop('unique'), (('login',),))
         self.assertEqual(d.pop('foreign'), (

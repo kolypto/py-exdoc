@@ -13,7 +13,10 @@ def getdoc(obj):
 
     :rtype: str
     """
-    return (inspect.getdoc(obj) or '').strip()
+    inspect_got_doc = inspect.getdoc(obj)
+    if inspect_got_doc in (object.__init__.__doc__, object.__doc__):
+        return '' # We never want this builtin stuff
+    return (inspect_got_doc or '').strip()
 
 
 def _get_callable(obj, of_class = None):
@@ -236,7 +239,17 @@ def doc(obj, of_class=None):
     }
     ```
 
+    Note: in Python 3, when documenting a method of a class, pass the class to the `doc()` function as the second argument:
+
+    ```python
+    doc(cls.method, cls)
+    ```
+
+    This is necessary because in Python3 methods are not bound like they used to. Now, they are just functions.
+
     :type obj: ModuleType|type|Callable|property
+    :param of_class: A class whose method is being documented.
+    :type of_class: class|None
     :rtype: Docstring|FDocstring
     """
     # Special care about properties
@@ -280,7 +293,7 @@ def doc(obj, of_class=None):
 
             # If constructor does not have it's own docstr -- copy it from the clsdoc
             if not docstr.doc:
-                docstr.doc = clsdoc.doc
+                docstr.doc = docstr.clsdoc
 
             # Merge arguments: type, doc
             for a_class in clsdoc.args:

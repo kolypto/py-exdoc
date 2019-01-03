@@ -117,11 +117,7 @@ class PyTest(unittest.TestCase):
         self.assertEqual(d.pop('module'), 'py-test')
         self.assertEqual(d.pop('name'), 'A')
         self.assertEqual(d.pop('qualname'), 'A')
-        if six.PY2:
-            # This class has no constructor; default comment is inherited from within Python
-            self.assertIn('x.__init__(...)', d.pop('doc'))  # 'x.__init__(...) initializes x; see help(type(x)) for signature'  # Pythonic stuff here
-        else:
-            self.assertEqual('Initialize self.  See help(type(self)) for accurate signature.', d.pop('doc'))  # Pythonic stuff
+        self.assertEqual(d.pop('doc'), 'Empty class')
         self.assertEqual(d.pop('clsdoc'), 'Empty class')
         if six.PY2:
             self.assertEqual(d.pop('signature'),  'A()')
