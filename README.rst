@@ -1,4 +1,4 @@
-|Build Status|
+`Build Status <https://travis-ci.org/kolypto/py-exdoc>`__
 
 ExDoc
 =====
@@ -26,8 +26,8 @@ Python
 
 Helpers for Python objects
 
-doc(obj)
-~~~~~~~~
+doc(obj, of_class=None)
+~~~~~~~~~~~~~~~~~~~~~~~
 
 Get parsed documentation for an object as a dict.
 
@@ -36,7 +36,7 @@ docstring.
 
 .. code:: python
 
-    from exdoc import doc
+   from exdoc import doc
 
 The ``doc()`` function simply fetches documentation for an object, which
 can be
@@ -51,43 +51,53 @@ parsed docstring:
 
 .. code:: python
 
-    def f(a, b=1, *args):
-        ''' Simple function
+   def f(a, b=1, *args):
+       ''' Simple function
 
-        : param a: First
-        : type a: int
-        : param b: Second
-        : type b: int
-        : param args: More numbers
-        : returns: nothing interesting
-        : rtype: bool
-        : raises ValueError: hopeless condition
-        '''
+       : param a: First
+       : type a: int
+       : param b: Second
+       : type b: int
+       : param args: More numbers
+       : returns: nothing interesting
+       : rtype: bool
+       : raises ValueError: hopeless condition
+       '''
 
-    from exdoc import doc
+   from exdoc import doc
 
-    doc(f)  # ->
-    {
-      'module': '__main__',
-      'name': 'f',
-      'qualname': 'f',  # qualified name: e.g. <class>.<method>
-      'signature': 'f(a, b=1, *args)',
-      'qsignature': 'f(a, b=1, *args)',  # qualified signature
-      'doc': 'Simple function',
-      'clsdoc': '',  # doc from the class (used for constructors)
-      # Exceptions
-      'exc': [
-        {'doc': 'hopeless condition', 'name': 'ValueError'}
-      ],
-      # Return value
-      'ret': {'doc': 'nothing interesting', 'type': 'bool'},
-      # Arguments
-      'args': [
-        {'doc': 'First', 'name': 'a', 'type': 'int'},
-        {'default': 1, 'doc': 'Second', 'name': 'b', 'type': 'int'},
-        {'doc': 'More numbers', 'name': '*args', 'type': None}
-      ],
-    }
+   doc(f)  # ->
+   {
+     'module': '__main__',
+     'name': 'f',
+     'qualname': 'f',  # qualified name: e.g. <class>.<method>
+     'signature': 'f(a, b=1, *args)',
+     'qsignature': 'f(a, b=1, *args)',  # qualified signature
+     'doc': 'Simple function',
+     'clsdoc': '',  # doc from the class (used for constructors)
+     # Exceptions
+     'exc': [
+       {'doc': 'hopeless condition', 'name': 'ValueError'}
+     ],
+     # Return value
+     'ret': {'doc': 'nothing interesting', 'type': 'bool'},
+     # Arguments
+     'args': [
+       {'doc': 'First', 'name': 'a', 'type': 'int'},
+       {'default': 1, 'doc': 'Second', 'name': 'b', 'type': 'int'},
+       {'doc': 'More numbers', 'name': '*args', 'type': None}
+     ],
+   }
+
+Note: in Python 3, when documenting a method of a class, pass the class
+to the ``doc()`` function as the second argument:
+
+.. code:: python
+
+   doc(cls.method, cls)
+
+This is necessary because in Python3 methods are not bound like they
+used to. Now, they are just functions.
 
 getmembers(obj, \*predicates)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -97,7 +107,7 @@ tuples, sorted by name.
 
 The optional list of predicates can be used to filter the members.
 
-The default predicate drops members whose name starts with '\_'. To
+The default predicate drops members whose name starts with ’_’. To
 disable it, pass ``None`` as the first predicate.
 
 subclasses(cls, leaves=False)
@@ -115,42 +125,42 @@ Documenting SqlAlchemy models.
 
 .. code:: python
 
-    from exdoc.sa import doc
+   from exdoc.sa import doc
 
-    doc(User)  # ->
-    {
-      'name': 'User',
-      # List of tables the model uses
-      'table': ('users',),
-      'doc': 'User account',
-      # PK: tuple[str]
-      'primary': ('uid',),
-      # Unique keys
-      'unique': (
-        # tuple[str]
-        ('login',),
-      ),
-      # Foreign keys
-      'foreign': (
-        {'key': 'uid', 'target': 'users.uid', 'onupdate': None, 'ondelete': 'CASCADE'},
-      ),
-      # Columns
-      'columns': [
-        {'key': 'uid', 'type': 'INTEGER NOT NULL', 'doc': ''},
-        {'key': 'login', 'type': 'VARCHAR NULL', 'doc': 'Login'},
-        {'key': 'creator_uid', 'type': 'INTEGER NULL', 'doc': 'Creator'},
-        {'key': 'meta', 'type': 'JSON NULL', 'doc': ''},
-      ],
-      # Relationships
-      'relations': [
-        {'key': 'creator', 'model': 'User',
-         'target': 'User(creator_uid=uid)', 'doc': ''},
-        {'key': 'devices[]', 'model': 'Device',
-         'target': 'Device(uid)', 'doc': ''},
-        {'key': 'created[]', 'model': 'User',
-         'target': 'User(uid=creator_uid)', 'doc': ''},
-      ]
-    }
+   doc(User)  # ->
+   {
+     'name': 'User',
+     # List of tables the model uses
+     'table': ('users',),
+     'doc': 'User account',
+     # PK: tuple[str]
+     'primary': ('uid',),
+     # Unique keys
+     'unique': (
+       # tuple[str]
+       ('login',),
+     ),
+     # Foreign keys
+     'foreign': (
+       {'key': 'uid', 'target': 'users.uid', 'onupdate': None, 'ondelete': 'CASCADE'},
+     ),
+     # Columns
+     'columns': [
+       {'key': 'uid', 'type': 'INTEGER NOT NULL', 'doc': ''},
+       {'key': 'login', 'type': 'VARCHAR NULL', 'doc': 'Login'},
+       {'key': 'creator_uid', 'type': 'INTEGER NULL', 'doc': 'Creator'},
+       {'key': 'meta', 'type': 'JSON NULL', 'doc': ''},
+     ],
+     # Relationships
+     'relations': [
+       {'key': 'creator', 'model': 'User',
+        'target': 'User(creator_uid=uid)', 'doc': ''},
+       {'key': 'devices[]', 'model': 'Device',
+        'target': 'Device(uid)', 'doc': ''},
+       {'key': 'created[]', 'model': 'User',
+        'target': 'User(uid=creator_uid)', 'doc': ''},
+     ]
+   }
 
 Building
 ========
@@ -160,21 +170,18 @@ json:
 
 .. code:: python
 
-    #! /usr/bin/env python
-    from exdoc import doc
-    import json
+   #! /usr/bin/env python
+   from exdoc import doc
+   import json
 
-    from project import User
+   from project import User
 
-    print json.dumps({
-      'user': doc(User),
-    })
+   print json.dumps({
+     'user': doc(User),
+   })
 
 And then use its output:
 
 .. code:: console
 
-    ./collect.py | j2 --format=json README.md.j2
-
-.. |Build Status| image:: https://api.travis-ci.org/kolypto/py-exdoc.png?branch=master
-   :target: https://travis-ci.org/kolypto/py-exdoc
+   ./collect.py | j2 --format=json README.md.j2

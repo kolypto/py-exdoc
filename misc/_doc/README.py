@@ -8,7 +8,7 @@ import exdoc, exdoc.py, exdoc.sa
 
 def docmodule(module):
     return { name: doc(value)
-             for name, value in getmembers(module) + [('__module__', module)] }
+             for name, value in list(getmembers(module)) + [('__module__', module)] }
 
 data = {
     'exdoc': {
@@ -18,4 +18,4 @@ data = {
     }
 }
 
-print json.dumps(data, indent=2)
+print(json.dumps(data, indent=2))
