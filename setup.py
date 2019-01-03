@@ -22,6 +22,7 @@ setup(
 
     install_requires=[
         'six',
+        'qualname',
     ],
     extras_require={},
     include_package_data=True,

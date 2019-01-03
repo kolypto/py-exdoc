@@ -213,12 +213,8 @@ class PyTest(unittest.TestCase):
         d = exdoc.doc(C.s, C)
         self.assertEqual(d.pop('module'), 'py-test')
         self.assertEqual(d.pop('name'), 's')
-        if six.PY2:
-            self.assertEqual(d.pop('qualname'), 's')  # FIXME: wrong name for staticmethods!
-            self.assertEqual(d.pop('qsignature'), 's(a=2)')  # FIXME: wrong name for staticmethods!
-        else:
-            self.assertEqual(d.pop('qualname'), 'C.s')
-            self.assertEqual(d.pop('qsignature'), 'C.s(a=2)')
+        self.assertEqual(d.pop('qualname'), 'C.s')
+        self.assertEqual(d.pop('qsignature'), 'C.s(a=2)')
         self.assertEqual(d.pop('signature'), 's(a=2)')
         self.assertEqual(d.pop('doc'), 'Empty static method')
         self.assertEqual(d.pop('clsdoc'), '')
@@ -250,7 +246,7 @@ class PyTest(unittest.TestCase):
         self.assertEqual(d.pop('module'), 'py-test')
         self.assertEqual(d.pop('name'), 'p')
         if six.PY2:
-            self.assertEqual(d.pop('qualname'), 'p')  # FIXME: wrong name for properties!
+            self.assertEqual(d.pop('qualname'), 'C.p')
             self.assertEqual(d.pop('qsignature'), 'p')  # FIXME: wrong name for properties!
         else:
             self.assertEqual(d.pop('qualname'), 'C.p')  # FIXME: wrong name for properties!
@@ -271,10 +267,7 @@ class PyTest(unittest.TestCase):
         def f(arg=A): pass
         d = exdoc.doc(f)
         self.assertEqual(d['signature'],  "f(arg=A)")
-        if six.PY2:
-            self.assertEqual(d['qsignature'], "f(arg=A)")
-        else:
-            self.assertEqual(d['qsignature'], "PyTest.test_doc_specific.<locals>.f(arg=A)")
+        self.assertEqual(d['qsignature'], "PyTest.test_doc_specific.<locals>.f(arg=A)")
 
         # Variadic arguments with classes
         class A(object):

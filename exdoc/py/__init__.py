@@ -4,6 +4,7 @@ import inspect
 import collections
 import re
 import six
+from qualname import qualname
 from .. import data
 
 
@@ -34,42 +35,17 @@ def _get_callable(obj, of_class = None):
     :rtype: (str, Callable|None, Class|None)
     """
     # Cases
-    name = ''
     o = obj
 
-    if six.PY2:
-        if inspect.isfunction(obj):
+    if inspect.isclass(obj):
+        try:
+            o = obj.__init__
+            of_class = obj
+        except AttributeError:
             pass
-        elif inspect.isclass(obj):
-            try:
-                o = obj.__init__
-                of_class = obj
-            except AttributeError:
-                pass
-        elif inspect.ismethod(obj):
-            if obj.im_class is type:
-                # @classmethod: bound to class
-                cls = obj.im_self
-            else:
-                # Ordinary methods: not bound
-                cls = obj.im_class
-            name = cls.__name__ + '.'
-        else:
-            raise AssertionError('Unsupported type provided: {}'.format(type(obj)))
-    else:
-        if inspect.isfunction(obj) and of_class is None:
-            pass
-        elif inspect.isclass(obj):
-            try:
-                o = obj.__init__
-                of_class = obj
-            except AttributeError:
-                pass
-
-        return obj.__qualname__, o, of_class
 
     # Finish
-    return name + obj.__name__, o, of_class
+    return qualname(obj), o, of_class
 
 
 def _doc_parse(doc, module=None, qualname=None):
