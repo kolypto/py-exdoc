@@ -1,4 +1,4 @@
-import unittest, six
+import unittest, six, sys
 from exdoc import sa
 
 from sqlalchemy.ext.declarative import declarative_base
@@ -42,7 +42,7 @@ class SaTest(unittest.TestCase):
         d = sa.doc(User)
         self.assertEqual(d.pop('name'), 'User')
         self.assertEqual(d.pop('table'), ('users',))
-        if six.PY2:
+        if six.PY2 or (3,4) == sys.version_info[:2]:
             self.assertEqual(d.pop('doc'), '')
         else:
             self.assertEqual(d.pop('doc'), 'The most base type')  # Pythonic stuff
