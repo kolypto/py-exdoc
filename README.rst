@@ -1,4 +1,5 @@
 `Build Status <https://travis-ci.org/kolypto/py-exdoc>`__
+`Pythons <.travis.yml>`__
 
 ExDoc
 =====
