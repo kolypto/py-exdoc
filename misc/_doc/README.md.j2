@@ -1,5 +1,5 @@
 [![Build Status](https://api.travis-ci.org/kolypto/py-exdoc.png?branch=master)](https://travis-ci.org/kolypto/py-exdoc)
-[![Pythons](https://img.shields.io/badge/python-2.7%20%7C%203.4%E2%80%933.7-blue.svg)](.travis.yml)
+[![Pythons](https://img.shields.io/badge/python-3.5%20%7C%203.4%E2%80%933.7-blue.svg)](.travis.yml)
 
 ExDoc
 =====
@@ -13,7 +13,10 @@ Use any command-line templating engine, like [j2cli](https://github.com/kolypto/
 
 It does not do any automatic background magic: it just offers helpers which allows you to extract the necessary pieces.
 
+Currently supports parsing the following documentation formats:
 
+* [Sphinx (reST)](http://sphinx-doc.org/)
+* [Google](https://github.com/google/styleguide/blob/gh-pages/pyguide.md#38-comments-and-docstrings)
 
 
 Collectors

@@ -128,7 +128,7 @@ class Docstring(DictProxy):
 
 
 class FDocstring(Docstring):
-    def __init__(self, module=None, qualname=None, doc='', clsdoc='', args=(), ret=None, exc=()):
+    def __init__(self, module=None, qualname=None, doc='', clsdoc='', args=(), ret=None, exc=(), example=None):
         """ Parsed docstring for a callable
 
         :param module: Module name
@@ -153,6 +153,7 @@ class FDocstring(Docstring):
         self.exc = exc
         self.signature = None
         self.qsignature = None
+        self.example = example
 
     def update_signature(self):
         args = ['='.join((a.name, a.default.__name__ if isinstance(a.default, type) else repr(a.default))) if 'default' in a else a.name

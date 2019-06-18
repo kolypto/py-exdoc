@@ -3,8 +3,8 @@
 import inspect
 import collections
 import re
-import six
-from qualname import qualname
+from inspect import cleandoc
+
 from .. import data
 
 
@@ -48,7 +48,7 @@ def _get_callable(obj, of_class = None):
             pass
 
     # Finish
-    return qualname(obj), o, of_class
+    return obj.__qualname__, o, of_class
 
 
 def _doc_parse(doc, module=None, qualname=None):
@@ -56,34 +56,147 @@ def _doc_parse(doc, module=None, qualname=None):
 
     :rtype: data.FDocstring
     """
+    parser = _doc_parse__detect_format(doc, module, qualname)
+    return parser(doc, module, qualname)
 
-    # Build the rex
-    known_tags = {
-        'param': 'arg',
-        'type': 'arg-type',
-        'return': 'ret',
-        'returns': 'ret',
-        'rtype': 'ret-type',
-        'exception': 'exc',
-        'except': 'exc',
-        'raise': 'exc',
-        'raises': 'exc',
-    }
-    tag_rex = re.compile(r'^\s*:(' + '|'.join(map(re.escape, known_tags)) + r')\s*(\S+)?\s*:', re.MULTILINE)
 
+def _doc_parse__detect_format(doc, module=None, qualname=None):
+    """ Detect docstring format and get a callable that will process it """
+    found_sphinx = sphinx_tags_rex.search(doc) is not None
+    found_google = google_sections_rex.search(doc) is not None
+
+    if found_google and found_sphinx:
+        raise ValueError(
+            "Cannot determine the format of {module}.{qualname} docstring: both Sphinx and Google formats seem to be "
+            "applicable.".format(module=module, qualname=qualname)
+        )
+
+    # Use Google format
+    if found_google:
+        return _doc_parse_google
+
+    # By default, use Sphinx format
+    return _doc_parse_sphinx
+
+known_google_secions = {
+    "Arguments": "args",
+    "Args": "args",
+    "Parameters": "args",
+    "Params": "args",
+    "Raises": "excs",
+    "Exceptions": "excs",
+    "Except": "excs",
+    "Attributes": "attrs",
+    "Example": "examples",
+    "Examples": "examples",
+    "Returns": "ret",
+    "Yields": "ret",
+}
+
+google_sections_rex = re.compile(r'^\s*(' + '|'.join(map(re.escape, known_google_secions)) + r'):\s*$', re.MULTILINE)
+
+
+def _doc_parse_google(doc, module=None, qualname=None):
+    """ Parse docstring into a dict, format: Google
+
+    :rtype: data.FDocstring
+    """
+    # Sections that have a "name: text" structure or a "name (type): text" structure
+    structured_sections = {'args', 'excs', 'attrs'}
+    structured_sections_rex = re.compile(r'^\s*(\S+)\s*(?:\((\S+)\))?\s*:', re.MULTILINE)
+
+    # Parse the return type
+    return_type_rex = re.compile(r'^(\S+):')
+
+    # Dedent
+    dedent_rex = re.compile(r'^\s+', re.MULTILINE)
+    dedent = lambda text: dedent_rex.sub('')
+
+    # Info variables
+    doc = doc  # the leftover docstring
+    doc_args = []
+    doc_exc = []
+    doc_ret = None
+    doc_example = None
+
+    # Go through sections in reverse
+    # This way, it's always easy to copy the pieces
+    for section_name_orig, section_text, doc in _parse_sections_in_reverse(google_sections_rex, doc):
+        section_name = known_google_secions[section_name_orig]  # Normalized section name
+
+        # Parse the section
+        section_structure = []
+        if section_name in structured_sections:
+            # Parse every item
+            for item_name, item_type, item_text, section_text \
+                in _parse_sections_in_reverse(structured_sections_rex, section_text):
+                    section_structure.append((item_name, item_type, cleandoc(item_text)))
+            # Finalize
+            section_structure.reverse()
+            section_text = section_text.strip()
+
+            # Test
+            if section_text != '':
+                raise ValueError(
+                    "There may be a typo in section '{section}'. Unparsed data remains: {unparsed}".format(
+                        section=section_name_orig, unparsed=section_text
+                    )
+                )
+
+        # Handle section
+        if section_name == 'args':
+            for arg_name, arg_type, arg_descr in section_structure:
+                doc_args.append(data.ArgumentDoc(arg_name, arg_descr, arg_type))
+        elif section_name == 'excs':
+            for exc_class, _, exc_descr in section_structure:
+                doc_exc.append(data.ExceptionDoc(exc_class, exc_descr))
+        elif section_name == 'examples':
+            doc_example = cleandoc(section_text)
+        elif section_name == 'ret':
+            # The return type might be in the very head of the string
+            ret_type = None
+            m = return_type_rex.match(section_text)
+            if m:
+                ret_type = m[1].strip()
+                section_text = section_text[m.end():]
+                section_text = cleandoc(section_text)
+            # Done
+            doc_ret = data.ValueDoc(section_text, ret_type)
+        elif section_name == 'attrs':
+            pass  # TODO: support for class attributes
+
+    # Done
+    return data.FDocstring(module=module, qualname=qualname,
+                           doc=doc, args=doc_args, exc=doc_exc, ret=doc_ret, example=doc_example)
+
+# Build the regexp
+known_sphinx_tags = {
+    'param': 'arg',
+    'type': 'arg-type',
+    'return': 'ret',
+    'returns': 'ret',
+    'rtype': 'ret-type',
+    'exception': 'exc',
+    'except': 'exc',
+    'raise': 'exc',
+    'raises': 'exc',
+}
+sphinx_tags_rex = re.compile(r'^\s*:(' + '|'.join(map(re.escape, known_sphinx_tags)) + r')\s*(\S+)?\s*:', re.MULTILINE)
+
+
+def _doc_parse_sphinx(doc, module=None, qualname=None):
+    """ Parse docstring into a dict, format: Sphinx (reST)
+
+    :rtype: data.FDocstring
+    """
     # Match tags
+    doc = doc  # the leftover docstring
     collect_args = {}
     collect_ret = {}
     doc_args = []
     doc_exc = []
-    for m in reversed(list(tag_rex.finditer(doc))):
-        # Fetch data
-        tag, arg = m.groups()
-        tag = known_tags[tag]  # Normalized tag name
-
-        # Fetch docstring part
-        value = doc[m.end():].strip()  # Copy text after the tag
-        doc = doc[:m.start()].strip()  # truncate the string
+    for tag, arg, value, doc in _parse_sections_in_reverse(sphinx_tags_rex, doc):
+        tag = known_sphinx_tags[tag]  # Normalized tag name
 
         # Handle tag: collect data
         if tag == 'exc':
@@ -109,13 +222,21 @@ def _doc_parse(doc, module=None, qualname=None):
     return data.FDocstring(module=module, qualname=qualname, doc=doc, args=doc_args, exc=doc_exc, ret=doc_ret)
 
 
-if six.PY3:
-    def is_method_static(cls, method_name):
-        # http://stackoverflow.com/questions/14187973/python3-check-if-method-is-static
-        for c in cls.mro():
-            if method_name in c.__dict__:
-                return isinstance(c.__dict__[method_name], staticmethod)
-        raise RuntimeError("Unable to find %s in %s" % (method_name, cls.__name__))
+def _parse_sections_in_reverse(rex, text):
+    """ Keep chopping the matching `rex` sections from the `text` docstring """
+    for m in reversed(list(rex.finditer(text))):
+        groups = m.groups()  # the groups matched by the RegExp
+        section_text = text[m.end():].strip()  # the text after the section header (its body)
+        text = text[:m.start()]  # the remaining portion of the string
+        yield (*groups, section_text, text.strip())
+
+
+def is_method_static(cls, method_name):
+    # http://stackoverflow.com/questions/14187973/python3-check-if-method-is-static
+    for c in cls.mro():
+        if method_name in c.__dict__:
+            return isinstance(c.__dict__[method_name], staticmethod)
+    raise RuntimeError("Unable to find %s in %s" % (method_name, cls.__name__))
 
 
 def _argspec(func):
@@ -126,7 +247,7 @@ def _argspec(func):
     """
     assert isinstance(func, collections.Callable), 'Argument must be a callable'
 
-    try: sp =  inspect.getargspec(func) if six.PY2 else inspect.getfullargspec(func)
+    try: sp = inspect.getfullargspec(func)
     except TypeError:
         # inspect.getargspec() fails for built-in functions
         return []
@@ -143,12 +264,8 @@ def _argspec(func):
     # *args, **kwargs
     if sp.varargs:
         ret.append(data.ArgumentSpec(sp.varargs, varargs=True))
-    if six.PY2:
-        if sp.keywords:
-            ret.append(data.ArgumentSpec(sp.keywords, keywords=True))
-    else:
-        if sp.varkw:
-            ret.append(data.ArgumentSpec(sp.varkw, keywords=True))
+    if sp.varkw:
+        ret.append(data.ArgumentSpec(sp.varkw, keywords=True))
 
     # TODO: support Python 3: kwonlyargs, kwonlydefaults, annotations
 
@@ -170,9 +287,8 @@ def _docspec(func, module=None, qualname=None, of_class=None):
     doc.args = [data.Argument(a, doc_map.get(a.name.lstrip('*'), None)) for a in sp]
 
     # Args shift: dump `self`
-    if (six.PY2 and inspect.ismethod(func)) or \
-        (six.PY3 and (inspect.isroutine(func) and of_class is not None) and (of_class is not None and not is_method_static(of_class, func.__name__))):
-            doc.args = doc.args[1:]
+    if (inspect.isroutine(func) and of_class is not None) and (of_class is not None and not is_method_static(of_class, func.__name__)):
+        doc.args = doc.args[1:]
 
     # Signature
     doc.update_signature()

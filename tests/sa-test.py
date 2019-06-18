@@ -1,4 +1,4 @@
-import unittest, six, sys
+import unittest
 from exdoc import sa
 
 from sqlalchemy.ext.declarative import declarative_base
