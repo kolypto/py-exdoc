@@ -75,11 +75,13 @@ class ArgumentDoc(ValueDoc):
 class ArgumentSpec(DictProxy):
     NODEFAULT = NotImplemented
 
-    def __init__(self, name, default=NODEFAULT, varargs=False, keywords=False):
+    def __init__(self, name, type=None, default=NODEFAULT, varargs=False, keywords=False):
         """ Specification for an argument
 
         :param name: Argument name
         :type name: str
+        :param type: Argument type
+        :type type: type
         :param default: Default value, if any
         :type default: *
         :param varargs: *args indicator
@@ -89,6 +91,7 @@ class ArgumentSpec(DictProxy):
         """
         super(ArgumentSpec, self).__init__()
         self.name = name
+        self.type = type
         if varargs:  self.name =  '*' + self.name
         if keywords: self.name = '**' + self.name
         if default is not self.NODEFAULT:
@@ -97,7 +100,7 @@ class ArgumentSpec(DictProxy):
 
 class Argument(ArgumentSpec, ArgumentDoc):
     def __init__(self, spec, doc=''):
-        """ Init argument description
+        """ Init argument description from ArgumentSpec (function info) and ArgumentDoc (docstring info)
 
         :param spec: Argument spec
         :type spec: ArgumentSpec
@@ -108,18 +111,21 @@ class Argument(ArgumentSpec, ArgumentDoc):
         self.update(doc or ArgumentDoc(spec.name))
         self.update(spec)
 
+        # If argspec has no type, get it from the doc
+        if spec.type is None and doc:
+            self.type = doc.type
+
 
 class Docstring(DictProxy):
-    def __init__(self, module=None, qualname=None, doc=''):
-        """ Plaintext docstring
+    """ Plaintext docstring
 
-        :param module: Module name
-        :type module: str|None
-        :param qualname: Qualified object name
-        :type qualname: str
-        :param doc: Text
-        :type doc: str
-        """
+    Attrs:
+        module (str?): Module name
+        qualname (str): Qualified object name (class.method)
+        doc (str): The docstring
+    """
+
+    def __init__(self, module=None, qualname=None, doc=''):
         super(Docstring, self).__init__()
         self.module = module
         self.name = qualname.rsplit('.', 1)[-1]
@@ -128,37 +134,67 @@ class Docstring(DictProxy):
 
 
 class FDocstring(Docstring):
-    def __init__(self, module=None, qualname=None, doc='', clsdoc='', args=(), ret=None, exc=()):
-        """ Parsed docstring for a callable
+    """ Docstring for a callable
 
-        :param module: Module name
-        :type module: str|None
-        :param qualname: Qualified object name
-        :type qualname: str
-        :param doc: Callable docstring
-        :type doc: str
-        :param clsdoc: Class docstring
-        :type clsdoc: str
-        :param args: List of arguments
-        :type args: list[Argument|ArgumentDoc]
-        :param ret: Return value, if any
-        :type ret: ValueDoc|None
-        :param exc: List of exceptions
-        :type exc: list[ExceptionDoc]
-        """
+    Attrs:
+        clsdoc: Docstring for the class
+        args (list[Argument|ArgumentDoc]): Function arguments
+        ret (ValueDoc|None): Return type
+        exc (list[ExceptionDoc]): Exceptions info
+        signature (str): function signature (with args)
+        tsignature (str): typed function signature (with args and types)
+        rtsignature (str): return-typed function signature (with args and return-type)
+        qsignature (str): qualified function signature (with full name and  args)
+        qtsignature (str): qualified typed function signature (with full name and args and types)
+        qrtsignature (str): qualified return-typed function signature (with full name and args and return-type)
+        example (str): the "Example" section, if any
+    """
+
+    def __init__(self, module=None, qualname=None, doc='', clsdoc='', args=(), ret=None, exc=(), example=None):
         super(FDocstring, self).__init__(module, qualname, doc)
         self.clsdoc = clsdoc
         self.args = args
         self.ret = ret
         self.exc = exc
         self.signature = None
+        self.tsignature = None
+        self.rtsignature = None
         self.qsignature = None
+        self.qtsignature = None
+        self.qrtsignature = None
+        self.example = example
 
     def update_signature(self):
-        args = ['='.join((a.name, a.default.__name__ if isinstance(a.default, type) else repr(a.default))) if 'default' in a else a.name
-                for a in self.args]
-        self.signature = '{}({})'.format(self.name, ', '.join(args))
-        self.qsignature = '{}({})'.format(self.qualname, ', '.join(args))
+        # Prepare arguments
+        args_typed = []
+        args_untyped = []
+        for a in self.args:
+            a_type = ': {}'.format(a.type) if a.type else ''
+            a_default = '={}'.format(a.default.__name__ if isinstance(a.default, type) else repr(a.default)) \
+                        if 'default' in a else ''
+
+            # untyped
+            args_untyped.append(a.name + a_default)
+            args_typed.append(a.name + a_type + a_default)
+
+        # untyped
+        self.signature = '{}({})'.format(self.name, ', '.join(args_untyped))
+        self.qsignature = '{}({})'.format(self.qualname, ', '.join(args_untyped))
+
+        # rtyped
+        self.rtsignature = self.signature
+        self.qrtsignature = self.qsignature
+
+        # typed
+        self.tsignature = '{}({})'.format(self.name, ', '.join(args_typed))
+        self.qtsignature = '{}({})'.format(self.qualname, ', '.join(args_typed))
+        # -> returns
+        if self.ret and self.ret.type is not None:
+            rtype_str = ' -> {}'.format(self.ret.type)
+            self.tsignature += rtype_str
+            self.qtsignature += rtype_str
+            self.rtsignature += rtype_str
+            self.qrtsignature += rtype_str
 
 #endregion
 
