@@ -74,12 +74,8 @@ def _doc_parse__detect_format(doc, module=None, qualname=None, doc_format=None):
             "applicable.".format(module=module, qualname=qualname)
         )
     if doc_format == GOOGLE_FORMAT:
-        if not found_google:
-            raise ValueError("Docstring not in Google format")
         return _doc_parse_google
     if doc_format == SPHINX_FORMAT:
-        if not found_sphinx:
-            raise ValueError("Docstring not in Sphinx format")
         return _doc_parse_sphinx
     # Use Google format
     if found_google:
