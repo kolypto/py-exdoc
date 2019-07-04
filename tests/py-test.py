@@ -68,6 +68,16 @@ class Y:
 
 class PyTest(unittest.TestCase):
     """ Test Python helpers """
+    maxDiff = None
+    longMessage = True
+
+    def assertDictContains(self, actual, expected):
+        """ Check that `actual` contains all the key-values from `expected` """
+        return self.assertEqual(
+            {k: actual.get(k, ValueMissing)
+             for k, v in expected.items()},
+            expected
+        )
 
     def test_doc(self):
         """ Test doc() """
@@ -391,6 +401,22 @@ class PyTest(unittest.TestCase):
         ])
         self.assertEqual(d['example'], 'a\n    b\nc')
 
+        # Test conflict
+        def f4_example():
+            """ Sphinx
+
+            Example:
+                aaa
+
+            :returns: hey
+            """
+        d = exdoc.doc(f4_example)  # Sphinx is preferred
+        self.assertEqual(d['doc'], 'Sphinx\n\nExample:\n    aaa')
+        self.assertEqual(d['args'], [])
+        self.assertEqual(d['exc'], [])
+        self.assertEqual(d['ret'], {'doc': 'hey', 'type': None})
+
+
         # === Test: Class
         class ClsDocstr:
             """
@@ -458,3 +484,28 @@ class PyTest(unittest.TestCase):
         """ Test subclasses() """
         self.assertEqual(exdoc.subclasses(A), [A, B, C])
         self.assertEqual(exdoc.subclasses(A, leaves=True), [C])
+
+
+    def test_real_world_issues(self):
+        """ Test some real-world issues we've had with the parser """
+
+        # This docstring looks like google, but actually, it's plaintext
+        def f():
+            """ A
+            * A
+            * B
+            Arguments:
+            * `a``
+            * `b`
+            * `c`
+            Errors:
+            * d
+            """
+        self.assertDictContains(exdoc.doc(f), dict(
+            doc='A\n* A\n* B\nArguments:\n* `a``\n* `b`\n* `c`\nErrors:\n* d',
+            args=[],
+            ret=None
+        ))
+
+
+class ValueMissing: pass

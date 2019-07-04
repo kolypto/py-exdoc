@@ -62,9 +62,23 @@ def _doc_parse(doc, module=None, qualname=None):
 
 def _doc_parse__detect_format(doc, module=None, qualname=None):
     """ Detect docstring format and get a callable that will process it """
-    found_sphinx = sphinx_tags_rex.search(doc) is not None
-    found_google = google_sections_rex.search(doc) is not None
+    # Try detectors
+    found_sphinx_strict = sphinx_tags_detector_rex.search(doc) is not None
+    found_google_strict = google_sections_detector_rex.search(doc) is not None
+    found_sphinx_relaxed = sphinx_tags_rex.search(doc) is not None
+    found_google_relaxed = google_sections_rex.search(doc) is not None
 
+    # Choose: first, try strict.
+    # If it didn't work, try relaxed
+    if found_sphinx_strict or found_google_strict:
+        found_sphinx = found_sphinx_strict
+        found_google = found_google_strict
+    else:
+        # Prefer sphinx over Google here
+        found_sphinx = found_sphinx_relaxed
+        found_google = found_google_relaxed
+
+    # Result?
     if found_google and found_sphinx:
         raise ValueError(
             "Cannot determine the format of {module}.{qualname} docstring: both Sphinx and Google formats seem to be "
@@ -78,6 +92,7 @@ def _doc_parse__detect_format(doc, module=None, qualname=None):
     # By default, use Sphinx format
     return _doc_parse_sphinx
 
+# The list of sections used in Google format
 known_google_secions = {
     "Arguments": "args",
     "Args": "args",
@@ -92,8 +107,13 @@ known_google_secions = {
     "Returns": "ret",
     "Yields": "ret",
 }
-
-google_sections_rex = re.compile(r'^(' + '|'.join(map(re.escape, known_google_secions)) + r'):\s*$', re.MULTILINE)
+# And some regular expressions to detect and parse them
+_google_sections_mkrex = lambda known_google_secions: \
+    re.compile(r'^(' + '|'.join(map(re.escape, known_google_secions)) + r'):\s*$\s{4,}', re.MULTILINE)
+google_sections_rex = _google_sections_mkrex(known_google_secions)
+google_sections_detector_rex = _google_sections_mkrex(
+    set(known_google_secions) - {'Example', 'Examples'}  # they give a lot of false positives
+)
 
 
 def _doc_parse_google(doc, module=None, qualname=None):
@@ -177,7 +197,7 @@ def _doc_parse_google(doc, module=None, qualname=None):
     return data.FDocstring(module=module, qualname=qualname,
                            doc=doc, args=doc_args, exc=doc_exc, ret=doc_ret, example=doc_example)
 
-# Build the regexp
+# The list of tags used with Sphinx
 known_sphinx_tags = {
     'param': 'arg',
     'type': 'arg-type',
@@ -189,7 +209,11 @@ known_sphinx_tags = {
     'raise': 'exc',
     'raises': 'exc',
 }
-sphinx_tags_rex = re.compile(r'^:(' + '|'.join(map(re.escape, known_sphinx_tags)) + r')\s*(\S+)?\s*:', re.MULTILINE)
+# And regexes to parse and detect it
+_sphinx_tags_mkrex = lambda sphinx_tags: \
+    re.compile(r'^:(' + '|'.join(map(re.escape, sphinx_tags)) + r')\s*(\S+)?\s*:', re.MULTILINE)
+sphinx_tags_rex = _sphinx_tags_mkrex(known_sphinx_tags)
+sphinx_tags_detector_rex = sphinx_tags_rex  # reuse, because Sphinx format can be detected unambiguosly
 
 
 def _doc_parse_sphinx(doc, module=None, qualname=None):
