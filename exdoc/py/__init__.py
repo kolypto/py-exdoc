@@ -7,6 +7,9 @@ from inspect import cleandoc
 
 from .. import data
 
+GOOGLE_FORMAT = 'google'
+SPHINX_FORMAT = 'sphinx'
+
 
 def getdoc(obj):
     """ Get object docstring
@@ -51,32 +54,40 @@ def _get_callable(obj, of_class = None):
     return obj.__qualname__, o, of_class
 
 
-def _doc_parse(doc, module=None, qualname=None):
+def _doc_parse(doc, module=None, qualname=None, doc_format=None):
     """ Parse docstring into a dict
 
     :rtype: data.FDocstring
     """
-    parser = _doc_parse__detect_format(doc, module, qualname)
+    parser = _doc_parse__detect_format(doc, module, qualname, doc_format)
     return parser(doc, module, qualname)
 
 
-def _doc_parse__detect_format(doc, module=None, qualname=None):
+def _doc_parse__detect_format(doc, module=None, qualname=None, doc_format=None):
     """ Detect docstring format and get a callable that will process it """
     found_sphinx = sphinx_tags_rex.search(doc) is not None
     found_google = google_sections_rex.search(doc) is not None
 
-    if found_google and found_sphinx:
+    if found_google and found_sphinx and doc_format is None:
         raise ValueError(
             "Cannot determine the format of {module}.{qualname} docstring: both Sphinx and Google formats seem to be "
             "applicable.".format(module=module, qualname=qualname)
         )
-
+    if doc_format == GOOGLE_FORMAT:
+        if not found_google:
+            raise ValueError("Docstring not in Google format")
+        return _doc_parse_google
+    if doc_format == SPHINX_FORMAT:
+        if not found_sphinx:
+            raise ValueError("Docstring not in Sphinx format")
+        return _doc_parse_sphinx
     # Use Google format
     if found_google:
         return _doc_parse_google
 
     # By default, use Sphinx format
     return _doc_parse_sphinx
+
 
 known_google_secions = {
     "Arguments": "args",
@@ -294,14 +305,14 @@ def _argspec(func):
     return ret, annotation_to_string(sp.annotations.get('return', None))
 
 
-def _docspec(func, module=None, qualname=None, of_class=None):
+def _docspec(func, module=None, qualname=None, of_class=None, doc_format=None):
     """ For a callable, get the full spec by merging doc_parse() and argspec()
 
     :type func: Callable
     :rtype: data.FDocstring
     """
     sp, return_type = _argspec(func)
-    doc = _doc_parse(getdoc(func), module=module, qualname=qualname)
+    doc = _doc_parse(getdoc(func), module=module, qualname=qualname, doc_format=doc_format)
 
     # Merge args; priority to function signature
     doc_map = {arg.name: arg
@@ -329,7 +340,7 @@ def _docspec(func, module=None, qualname=None, of_class=None):
     return doc
 
 
-def doc(obj, of_class=None):
+def doc(obj, of_class=None, doc_format=None):
     """ Get parsed documentation for an object as a dict.
 
     This includes arguments spec, as well as the parsed data from the docstring.
@@ -398,6 +409,8 @@ def doc(obj, of_class=None):
     :type obj: ModuleType|type|Callable|property
     :param of_class: A class whose method is being documented.
     :type of_class: class|None
+    :param doc_format: Format of the documentation GOOGLE_FORMAT or SPHINX_FORMAT
+    :type doc_format: str|None
     :rtype: Docstring|FDocstring
     """
     # Special care about properties
@@ -422,7 +435,7 @@ def doc(obj, of_class=None):
 
     # Callables
     qualname, fun, of_class = _get_callable(obj, of_class)
-    docstr = _docspec(fun, module=module, qualname=qualname, of_class=of_class)
+    docstr = _docspec(fun, module=module, qualname=qualname, of_class=of_class, doc_format=doc_format)
 
     # Class? Get doc
     if inspect.isclass(obj):
@@ -431,7 +444,7 @@ def doc(obj, of_class=None):
         # Parse docstring and merge into constructor doc
         if clsdoc:
             # Parse docstring
-            clsdoc = _doc_parse(clsdoc, module=module, qualname=qualname)
+            clsdoc = _doc_parse(clsdoc, module=module, qualname=qualname, doc_format=doc_format)
 
             # Store clsdoc always
             docstr.clsdoc = clsdoc.doc

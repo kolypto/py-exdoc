@@ -21,4 +21,4 @@ And then use its output:
 
 """
 
-from .py import doc, getmembers, subclasses
+from .py import doc, getmembers, subclasses, SPHINX_FORMAT, GOOGLE_FORMAT
