@@ -1,3 +1,6 @@
+## 0.1.1 (2019-09-17)
+* Support for custom Postgres types
+
 ## 0.1.1 (2019-07-16)
 * Better Google docstring format
 
