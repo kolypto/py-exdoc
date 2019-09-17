@@ -44,10 +44,11 @@ from ..data import SaModelDoc, SaColumnDoc, SaForeignkeyDoc, SaRelationshipDoc
 from ..py import getdoc
 
 try:
-    from sqlalchemy import inspect
+    from sqlalchemy import inspect, exc as sa_exc
     from sqlalchemy.orm.mapper import Mapper
     from sqlalchemy.orm.relationships import RelationshipProperty
     from sqlalchemy.sql.schema import ForeignKeyConstraint, UniqueConstraint
+    from sqlalchemy.dialects import postgresql
 except ImportError:
     pass
 
@@ -64,11 +65,21 @@ def _model_columns(ins):
         if c.key.startswith('_'):
             continue
 
+        # Type
+        column_type = c.columns[0].type  # FIXME: support multi-column properties
+        # Compile it using a dialect if necessary
+        try:
+            column_type_str = str(column_type)
+        except sa_exc.UnsupportedCompilationError:
+            # Got to compile it using a dialect
+            # TODO: support other dialects in addition to Postgres
+            column_type_str = column_type.compile(dialect=postgresql.dialect())
+
         # Collect
         columns.append(SaColumnDoc(
             key=c.key,
             doc=c.doc or '',
-            type=str(c.columns[0].type),  # FIXME: support multi-column properties
+            type=column_type_str,
             null=c.columns[0].nullable,
         ))
     return columns
