@@ -135,19 +135,14 @@ def _model_relations(ins):
     """
     relations = []
     for r in ins.relationships:
-        # Hard times with the foreign model :)
-        if isinstance(r.argument, Mapper):
-            model_name = r.argument.class_.__name__
-        elif hasattr(r.argument, 'arg'):
-            model_name = r.argument.arg
-        else:
-            model_name = r.argument.__name__
+        # Target model name
+        target_model_name = r.mapper.class_.__name__
 
         # Format
         relations.append(SaRelationshipDoc(
             key=r.key,
             doc=r.doc or '',
-            model=model_name,
+            model=target_model_name,
             pairs=map(lambda a_b_tuple: a_b_tuple[0].key if a_b_tuple[0].key == a_b_tuple[1].key else '{}={}'.format(a_b_tuple[0].key, a_b_tuple[1].key), r.local_remote_pairs),
             uselist=r.uselist
         ))

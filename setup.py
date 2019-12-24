@@ -1,15 +1,11 @@
 #!/usr/bin/env python
 """ Documentation extractor. """
 
-import sys
-if sys.version_info < (3, 4, 0):
-    raise ImportError('Only Python 3.4+ is supported')
-
 from setuptools import setup, find_packages
 
 setup(
     name='exdoc',
-    version='0.1.2',
+    version='0.1.3',
     author='Mark Vartanyan',
     author_email='kolypto@gmail.com',
 
@@ -24,6 +20,7 @@ setup(
     scripts=[],
     entry_points={},
 
+    python_requires='>=3.4',
     install_requires=[],
     extras_require={},
     include_package_data=True,

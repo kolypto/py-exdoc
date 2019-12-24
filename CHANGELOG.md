@@ -1,3 +1,6 @@
+## 0.1.3 (2019-12-24)
+* Improved the documentation of SA relationships
+
 ## 0.1.1 (2019-09-17)
 * Support for custom Postgres types
 
