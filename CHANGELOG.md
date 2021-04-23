@@ -1,3 +1,6 @@
+## 0.1.4 (2021-04-23)
+* SqlAlchemy: `column_property()` support
+
 ## 0.1.3 (2019-12-24)
 * Improved the documentation of SA relationships
 
