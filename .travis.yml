@@ -4,11 +4,13 @@ language: python
 
 matrix:
   include:
-    - python: 3.5
-      env: TOXENV=py
     - python: 3.6
       env: TOXENV=py
     - python: 3.7-dev
+      env: TOXENV=py
+    - python: 3.8-dev
+      env: TOXENV=py
+    - python: 3.9-dev
       env: TOXENV=py
 install:
   - pip install tox
