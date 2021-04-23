@@ -74,6 +74,8 @@ def _model_columns(ins):
             # Got to compile it using a dialect
             # TODO: support other dialects in addition to Postgres
             column_type_str = column_type.compile(dialect=postgresql.dialect())
+        except sa_exc.CompileError:
+            column_type_str = '?'
 
         # Collect
         columns.append(SaColumnDoc(
