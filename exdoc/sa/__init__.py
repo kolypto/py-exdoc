@@ -80,9 +80,16 @@ def _model_columns(ins):
             key=c.key,
             doc=c.doc or '',
             type=column_type_str,
-            null=c.columns[0].nullable,
+            null=_is_attribute_nullable(c),
         ))
     return columns
+
+
+def _is_attribute_nullable(col):
+    try:
+        return col.expression.nullable
+    except AttributeError:
+        return False
 
 
 def _model_primary(ins):

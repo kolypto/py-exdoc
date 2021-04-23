@@ -4,18 +4,22 @@ from exdoc import sa
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, ForeignKey, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSON
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, column_property
 
 
 Base = declarative_base()
 
 class User(Base):
+    """ User """
     __tablename__ = 'users'
 
     uid = Column(Integer, primary_key=True, nullable=False)
     login = Column(String, unique=True, doc='Login')
     creator_uid = Column(Integer, ForeignKey(uid, ondelete='SET NULL'), nullable=True, doc="Creator")
     meta = Column(JSON)
+
+    age = Column(Integer)
+    age_plus_10 = column_property(age + 10)
 
     creator = relationship('User', backref='created', remote_side=[uid], foreign_keys=creator_uid)
 
@@ -42,17 +46,19 @@ class SaTest(unittest.TestCase):
         d = sa.doc(User)
         self.assertEqual(d.pop('name'), 'User')
         self.assertEqual(d.pop('table'), ('users',))
-        self.assertEqual(d.pop('doc'), '')
+        self.assertEqual(d.pop('doc'), 'User')
         self.assertEqual(d.pop('primary'), ('uid',))
         self.assertEqual(d.pop('unique'), (('login',),))
         self.assertEqual(d.pop('foreign'), (
             {'key': 'uid', 'target': 'users.uid', 'onupdate': None, 'ondelete': 'SET NULL'},
         ))
         self.assertEqual(d.pop('columns'), [
+            {'key': 'age_plus_10', 'type': 'INTEGER NOT NULL', 'doc': ''},
             {'key': 'uid', 'type': 'INTEGER NOT NULL', 'doc': ''},
             {'key': 'login', 'type': 'VARCHAR NULL', 'doc': 'Login'},
             {'key': 'creator_uid', 'type': 'INTEGER NULL', 'doc': 'Creator'},
             {'key': 'meta', 'type': 'JSON NULL', 'doc': ''},
+            {'key': 'age', 'type': 'INTEGER NULL', 'doc': ''},
         ])
         self.assertEqual(sorted(d.pop('relations'), key=lambda a: a['key']), [
             {'key': 'created[]', 'model': 'User', 'target': 'User(uid=creator_uid)', 'doc': ''},
@@ -80,3 +86,4 @@ class SaTest(unittest.TestCase):
             {'key': 'user', 'model': 'User', 'target': 'User(uid)', 'doc': 'Owner'}
         ])
         self.assertEqual(d, {})
+
